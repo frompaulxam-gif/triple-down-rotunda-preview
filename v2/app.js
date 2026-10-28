@@ -210,7 +210,9 @@
   }
   function wake(){if(!raf&&galleryVisible&&!document.hidden)raf=requestAnimationFrame(draw);}
   function stopIntro(){lastInteract=performance.now();if(intro){intro=false;angle=target=lastVisualRotation??angle;cancelIntro();lastVisualRotation=null;}}
-  document.addEventListener('focusin',e=>{if(intro&&e.target.closest('.header,.hero-title,.gallery-status'))stopIntro();});
+  document.addEventListener('focusin',e=>{if(intro&&e.target.closest('.header,.hero-title,.gallery-status,.work-showcase'))stopIntro();});
+  addEventListener('scroll',()=>{if(intro&&stage.getBoundingClientRect().bottom<innerHeight*.75)stopIntro();},{passive:true});
+  $('.scroll-hint')?.addEventListener('click',stopIntro);
   function move(d){stopIntro();announcePending=true;target=Math.round(target/step)*step+d*step;wake();}
   function snap(){target=Math.round(target/step)*step;wake();}
   stage.addEventListener('wheel',e=>{
@@ -275,6 +277,13 @@
       $('.project-summary').animate([{opacity:0,transform:'translateY(18px)'},{opacity:1,transform:'translateY(0)'}],{duration:600,delay:140,fill:'backwards',easing:'ease-out'});
     }
   }
+  document.addEventListener('click',e=>{
+    const link=e.target.closest('a[data-orbit-story]');
+    if(!link||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+    const projectIndex=projects.findIndex(p=>p.slug===link.dataset.orbitStory);
+    if(projectIndex<0)return;
+    e.preventDefault();stopIntro();openProject(projectIndex,link);
+  });
   function closeProject(){if(history.state?.orbitModal&&!returningFromHistory)history.back();else{dialog.close();history.replaceState({...history.state,orbitModal:false},'',location.pathname+location.search);}}
   $('.close-project').onclick=closeProject;
   dialog.addEventListener('cancel',e=>{e.preventDefault();closeProject();});
