@@ -3,7 +3,11 @@
   const projects = window.PROJECTS.map(p=>({...p,cover:'../'+p.cover,images:p.images.map(src=>'../'+src),logo:p.logo?'../'+p.logo:null,cardLogo:p.cardLogo?'../'+p.cardLogo:undefined}));
   const $ = s => document.querySelector(s);
   const stage = $('.stage'), ring = $('#ring'), scene = $('#scene');
-  const dialog = $('#project-dialog'), about = $('#about-dialog'), index = $('#work-index');
+  const dialog = $('#project-dialog'), index = $('#work-index');
+  const homeKey=location.pathname.replace(/\/?$/,'/')+':gallery';
+  let restored=null;
+  try{restored=JSON.parse(sessionStorage.getItem(homeKey)||'null');if(performance.getEntriesByType('navigation')[0]?.type==='reload')restored=null;}catch{}
+  let paused=Boolean(restored?.paused),galleryVisible=true,announcePending=false,sceneIntroOffset=0,returningFromHistory=false;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const count = projects.length, slots = count * 2, step = 360 / slots;
   const introPasses=4,introSteps=count*introPasses;
@@ -16,8 +20,8 @@
   const cruiseSeconds=(introSteps-slots-rushDistance-peakSpeed*brakeSeconds/2)/peakSpeed;
   const motionEnd=introStart+(buildSeconds+rushSeconds+cruiseSeconds+brakeSeconds)*1000;
   const introDuration=motionEnd+1050;
-  let angle = 0, target = 0, selected = 0, radius = 410, cardW = 190, cardH = 250;
-  let raf = 0, lastTime = 0, startTime = performance.now(), intro = !reduced.matches;
+  let angle = Number(restored?.angle)||0, target = Number(restored?.angle)||0, selected = 0, radius = 410, cardW = 190, cardH = 250;
+  let raf = 0, lastTime = 0, startTime = performance.now(), intro = !reduced.matches&&!restored;
   let drag = null, dragged = false, snapTimer = 0, returnFocus = null, currentProject = 0;
   let lastInteract=-Infinity, keyboardMode=false, lockupAnimations=[], introTimer=0, lastVisualRotation=null;
   const escape = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -27,7 +31,8 @@
   const reel=$('#logo-reel'),cross=$('.intro-cross'),photoBlurNode=$('#card-directional-blur');
   let lastBlurValue='',lastBlurEnabled=null;
   let reelSlot=100;
-  function finishLockup(){document.body.classList.remove('in-intro');$('#intro-lockup').hidden=true;}
+  function finishLockup(){document.body.classList.remove('in-intro');$('#intro-lockup').hidden=true;saveGallery();}
+  function saveGallery(){try{sessionStorage.setItem(homeKey,JSON.stringify({angle:lastVisualRotation??angle,paused,scroll:scrollY,seen:true}));}catch{}}
   function cancelIntro(){clearTimeout(introTimer);lockupAnimations.forEach(a=>a.cancel());finishLockup();}
   function introMotion(elapsed){
     const t=(elapsed-introStart)/1000;
@@ -67,9 +72,10 @@
     cross.style.filter=`blur(${(motion.normalisedSpeed*.8).toFixed(2)}px)`;
   }
   function brandIntro(){
-    if(reduced.matches){finishLockup();return;}
+    if(!intro||reduced.matches){finishLockup();return;}
     document.body.classList.add('in-intro');
     const mobile=innerWidth<701,at=ms=>ms/introDuration;
+    sceneIntroOffset=Math.min(0,innerHeight*.52-scene.getBoundingClientRect().top);
     reelSlot=mobile?80:100;
     const brands=[...Array.from({length:introPasses},()=>projects).flat(),projects[0]];
     reel.innerHTML=brands.map(p=>`<div class="intro-logo">${logo(p,'')}</div>`).join('');
@@ -119,10 +125,11 @@
   }
   const cards = [...projects,...projects].map((p,i) => {
     const projectIndex=i%count; const photo=i<count?p.cover:p.images[0];
-    const el = document.createElement('button');
+    const el = document.createElement(i<count?'button':'div');
     el.className = 'project-card'; el.dataset.project = p.slug;
-    el.setAttribute('aria-label', `Open ${p.title} case study`);
-    el.innerHTML = `<img class="card-photo" src="${photo}" alt="${escape(p.title)} project" draggable="false" fetchpriority="${i<3?'high':'auto'}"><span class="wash"></span><span class="card-caption"><span class="name">${cardLogo(p)}</span></span>`;
+    el.setAttribute('aria-label', `Open ${p.title} story`);
+    if(i>=count)el.setAttribute('aria-hidden','true');
+    el.innerHTML = `<span class="card-face"><img class="card-photo" src="${photo}" alt="${escape(p.title)} project" draggable="false" fetchpriority="${i<3?'high':'auto'}"><span class="wash"></span><span class="card-caption"><span class="name">${cardLogo(p)}</span></span></span>`;
     el.addEventListener('click', () => {if (!dragged) openProject(projectIndex, el);});
     el.addEventListener('focus',()=>{ if (!drag && document.activeElement===el){stopIntro();target=-i*step+Math.round((angle+i*step)/360)*360;wake();} });
     ring.append(el); return el;
@@ -145,11 +152,13 @@
       selected=n;$('#active-title').innerHTML=logo(projects[n]);
       $('#active-kind').textContent=projects[n].category;
       $('#position').textContent=`${String(n+1).padStart(2,'0')} / ${String(count).padStart(2,'0')}`;
-      $('#active-title').setAttribute('aria-label',`Open ${projects[n].title} case study`);
+      $('#active-title').setAttribute('aria-label',`Open ${projects[n].title} story`);
     }
+    if(announcePending&&Math.abs(target-angle)<.5){$('#gallery-announcement').textContent=projects[n].title;announcePending=false;}
   }
   function draw(t){
     raf=0;
+    if(!galleryVisible||document.hidden){lastTime=0;return;}
     const dt=lastTime?Math.min((t-lastTime)/16.667,3):1;lastTime=t;
     const wasIntro=intro;
     let spread=1,spin=0,introElapsed=Infinity,buildDistance=Infinity;
@@ -168,7 +177,7 @@
       updateBrandReel(motion);
       if(p===1){angle+=spin;target+=spin;spin=0;intro=false;finishLockup();}
     }
-    const idle=!wasIntro&&!drag&&!dialog.open&&!about.open&&index.hidden&&!reduced.matches&&performance.now()-lastInteract>1800&&!(keyboardMode&&stage.contains(document.activeElement));
+    const idle=!wasIntro&&!paused&&!drag&&!dialog.open&&!index.open&&!reduced.matches&&performance.now()-lastInteract>1800&&!(keyboardMode&&stage.contains(document.activeElement));
     if(idle){const drift=idleSpeed*dt/60;target-=drift;angle-=drift;}
     angle+=(target-angle)*(reduced.matches?1:1-Math.pow(.84,dt));
     if(Math.abs(target-angle)<.005)angle=target;
@@ -187,7 +196,9 @@
       const arrival=i===0?(introElapsed-860)/180:(buildDistance-i)/.72;
       const entrance=Math.max(0,Math.min(arrival,1));
       const arrived=1-Math.pow(1-entrance,3);
-      const x=sin*r,y=cos*r*.165-(1-arrived)*innerHeight*.72,z=cos*r*.986-(1-arrived)*85;
+      const landing=Math.max(0,Math.min((introElapsed-motionEnd-200)/850,1));
+      const introY=Number.isFinite(introElapsed)?sceneIntroOffset*(1-landing*landing*(3-2*landing)):0;
+      const x=sin*r,y=cos*r*.165-(1-arrived)*innerHeight*.72+introY,z=cos*r*.986-(1-arrived)*85;
       el.style.transform=`translate(-50%,-50%) translate3d(${x}px,${y}px,${z}px) rotateY(${i*step+angle+spin}deg) rotateX(-9.5deg) scale(${(.88+.12*arrived)*(.5+.5*spread)})`;
       el.style.opacity=String(Math.min(1,entrance*3));
       el.querySelector('.wash').style.opacity=String(Math.max(0,(-cos+.15)*.65));
@@ -195,59 +206,66 @@
       el.style.pointerEvents=cos>-.2&&entrance>.85?'auto':'none';
     });
     status();
-    if(!reduced.matches || intro || Math.abs(target-angle)>.005)wake();
+    if(intro||(!paused&&!reduced.matches&&!dialog.open&&!index.open)||drag||Math.abs(target-angle)>.005)wake();
   }
-  function wake(){if(!raf)raf=requestAnimationFrame(draw);}
+  function wake(){if(!raf&&galleryVisible&&!document.hidden)raf=requestAnimationFrame(draw);}
   function stopIntro(){lastInteract=performance.now();if(intro){intro=false;angle=target=lastVisualRotation??angle;cancelIntro();lastVisualRotation=null;}}
-  function move(d){stopIntro();target=Math.round(target/step)*step+d*step;wake();}
+  document.addEventListener('focusin',e=>{if(intro&&e.target.closest('.header,.hero-title,.gallery-status'))stopIntro();});
+  function move(d){stopIntro();announcePending=true;target=Math.round(target/step)*step+d*step;wake();}
   function snap(){target=Math.round(target/step)*step;wake();}
   stage.addEventListener('wheel',e=>{
-    if(dialog.open||about.open||!index.hidden||e.ctrlKey)return;
+    if(dialog.open||!!index.open||e.ctrlKey)return;
+    if(Math.abs(e.deltaX)<=Math.abs(e.deltaY)*1.2)return;
     e.preventDefault();stopIntro();
-    let d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;
+    announcePending=true;
+    let d=e.deltaX;
     if(e.deltaMode===1)d*=16;if(e.deltaMode===2)d*=innerHeight;
     target-=Math.max(-260,Math.min(260,d))*.065;wake();
     clearTimeout(snapTimer);snapTimer=setTimeout(snap,180);
   },{passive:false});
   stage.addEventListener('pointerdown',e=>{
     keyboardMode=false;
-    if(e.button!==0||e.target.closest('.gallery-footer,.gallery-status'))return;
+    if(drag||e.isPrimary===false||e.button!==0||e.target.closest('a,.gallery-footer,.gallery-status'))return;
     stopIntro();clearTimeout(snapTimer);dragged=false;
     drag={x:e.clientX,y:e.clientY,start:target,last:e.clientX,lastTime:performance.now(),speed:0,id:e.pointerId};
   });
   stage.addEventListener('pointermove',e=>{
     if(!drag)return;
     const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
-    if(Math.abs(dx)+Math.abs(dy)>7){dragged=true;stage.classList.add('dragging');stage.setPointerCapture(e.pointerId);}
+    if(!dragged&&e.pointerType==='touch'&&Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>7){drag=null;return;}
+    if(Math.abs(dx)>7){dragged=true;stage.classList.add('dragging');stage.setPointerCapture(e.pointerId);}
     if(dragged){e.preventDefault();target=drag.start+(dx-dy*.35)*.21;
       const now=performance.now();drag.speed=(e.clientX-drag.last)/Math.max(now-drag.lastTime,1);drag.last=e.clientX;drag.lastTime=now;wake();}
   });
   function endDrag(){if(!drag)return;const speed=performance.now()-drag.lastTime<90?drag.speed:0;
-    if(dragged){target+=Math.max(-step,Math.min(step,speed*16));snap();}
+    if(dragged){announcePending=true;target+=Math.max(-step,Math.min(step,speed*16));snap();}
     drag=null;stage.classList.remove('dragging');setTimeout(()=>{dragged=false;},0);
   }
   stage.addEventListener('pointerup',endDrag);stage.addEventListener('pointercancel',()=>{drag=null;dragged=false;stage.classList.remove('dragging');snap();});
   $('#previous').onclick=()=>move(1);$('#next').onclick=()=>move(-1);$('#active-title').onclick=()=>openProject(selected,cards[mod(Math.round(-angle/step),slots)]);
-  document.addEventListener('keydown',e=>{
+  stage.addEventListener('keydown',e=>{
+    if(e.target.closest('input,textarea,select,[contenteditable]'))return;
     keyboardMode=true;lastInteract=performance.now();
-    if(about.open)return;
-    if(dialog.open){if(e.key==='ArrowRight'){e.preventDefault();openProject(mod(currentProject+1,count));}if(e.key==='ArrowLeft'){e.preventDefault();openProject(mod(currentProject-1,count));}return;}
-    if(!index.hidden)return;
+    if(!!index.open)return;
     if(e.key==='ArrowRight'){e.preventDefault();move(-1);}if(e.key==='ArrowLeft'){e.preventDefault();move(1);}
   });
-  function showIndex(show){index.hidden=!show;stage.inert=show;$('#index-button').setAttribute('aria-expanded',String(show));
-    if(show){$('#close-index').focus();}else{$('#index-button').focus();}}
-  $('.skip-link').onclick=e=>{e.preventDefault();showIndex(true);};
-  $('#index-button').onclick=()=>showIndex(index.hidden);$('#close-index').onclick=()=>showIndex(false);
-  index.addEventListener('keydown',e=>{if(e.key==='Escape')showIndex(false);});
+  function showIndex(show){
+    if(show){stopIntro();if(!index.open)index.showModal();$('#close-index').focus();}
+    else if(index.open)index.close();
+    $('#index-button').setAttribute('aria-expanded',String(index.open));wake();
+  }
+  $('#index-button').onclick=()=>showIndex(!index.open);$('#close-index').onclick=()=>showIndex(false);
+  index.addEventListener('cancel',e=>{e.preventDefault();showIndex(false);});
+  index.addEventListener('close',()=>{$('#index-button').setAttribute('aria-expanded','false');$('#index-button').focus({preventScroll:true});wake();});
   function openProject(i,from){
     const p=projects[i],wasOpen=dialog.open;currentProject=i;
-    if(!wasOpen)returnFocus=from||document.activeElement;
-    let rect=from?.classList.contains('project-card')?from.getBoundingClientRect():null;
-    $('#project-content').innerHTML=`<div class="project-opening"><img class="project-hero" src="${p.cover}" alt="${escape(p.title)} project"><div class="project-summary"><p class="project-kicker">${escape(p.category)}</p><h2 id="project-title">${logo(p,'project-logo')}</h2><p class="project-intro">${escape(p.intro)}</p><p class="project-services">${escape(p.services)}</p></div></div>${p.body.length?`<div class="project-body">${p.body.map(t=>`<p>${escape(t)}</p>`).join('')}</div>`:'<div style="height:40px"></div>'}<div class="project-images">${p.images.map((s,j)=>`<img src="${s}" alt="${escape(p.title)} ${j?'project detail':'in focus'}" loading="lazy">`).join('')}</div><div class="project-bottom"><button id="next-case"><span>Next project</span>${escape(projects[mod(i+1,count)].title)} →</button><a href="mailto:nico@tripledown.group">Let's make something happen</a></div>`;
+    if(!wasOpen)returnFocus=from?.getAttribute('aria-hidden')==='true'?$('#active-title'):(from||document.activeElement);
+    saveGallery();
+    let rect=from?.classList.contains('project-card')?(from.querySelector('.card-face')||from).getBoundingClientRect():null;
+    $('#project-content').innerHTML=`<div class="project-opening"><img class="project-hero" src="${p.cover}" alt="${escape(p.title)} project"><div class="project-summary"><p class="project-kicker">Earlier work and experience · ${escape(p.category)}</p><h2 id="project-title">${logo(p,'project-logo')}</h2><p class="project-intro">${escape(p.intro)}</p><p class="project-services">${escape(p.services)}</p></div></div>${p.body.length?`<div class="project-body">${p.body.map(t=>`<p>${escape(t)}</p>`).join('')}</div>`:'<div style="height:40px"></div>'}<div class="project-images">${p.images.map((s,j)=>`<img src="${s}" alt="${escape(p.title)} ${j?'project detail':'in focus'}" loading="lazy">`).join('')}</div><div class="project-bottom"><button id="next-case"><span>Next project</span>${escape(projects[mod(i+1,count)].title)} →</button><a href="mailto:systems@tripledown.group">Let's make something happen</a></div>`;
     if(!wasOpen)dialog.showModal();dialog.scrollTop=0;
     $('#next-case').onclick=()=>openProject(mod(currentProject+1,count));
-    history.replaceState(null,'',`#${p.slug}`);
+    if(!returningFromHistory){const method=wasOpen||location.hash==='#'+p.slug?'replaceState':'pushState';history[method]({...history.state,orbitModal:true},'',`#${p.slug}`);}
     if(rect&&!reduced.matches){
       const img=$('.project-hero');const dst=img.getBoundingClientRect();
       const clone=new Image();clone.className='flight';clone.src=p.cover;
@@ -257,13 +275,21 @@
       $('.project-summary').animate([{opacity:0,transform:'translateY(18px)'},{opacity:1,transform:'translateY(0)'}],{duration:600,delay:140,fill:'backwards',easing:'ease-out'});
     }
   }
-  function closeProject(){dialog.close();}
+  function closeProject(){if(history.state?.orbitModal&&!returningFromHistory)history.back();else{dialog.close();history.replaceState({...history.state,orbitModal:false},'',location.pathname+location.search);}}
   $('.close-project').onclick=closeProject;
-  dialog.addEventListener('close',()=>{history.replaceState(null,'',location.pathname+location.search);target=-currentProject*step+Math.round((angle+currentProject*step)/360)*360;wake();returnFocus?.focus({preventScroll:true});});
-  $('#about-button').onclick=()=>about.showModal();$('.close-about').onclick=()=>about.close();
-  about.addEventListener('click',e=>{if(e.target===about){const r=about.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right)about.close();}});
+  dialog.addEventListener('cancel',e=>{e.preventDefault();closeProject();});
+  dialog.addEventListener('close',()=>{target=-currentProject*step+Math.round((angle+currentProject*step)/(count*step))*(count*step);wake();returnFocus?.focus({preventScroll:true});});
+  dialog.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select,[contenteditable]'))return;if(e.key==='ArrowRight'){e.preventDefault();openProject(mod(currentProject+1,count));}if(e.key==='ArrowLeft'){e.preventDefault();openProject(mod(currentProject-1,count));}});
+  window.addEventListener('popstate',()=>{const i=projects.findIndex(p=>p.slug===location.hash.slice(1));returningFromHistory=true;try{if(i>=0)openProject(i);else if(dialog.open)dialog.close();}finally{returningFromHistory=false;}});
+  $('#pause-gallery').setAttribute('aria-pressed',String(paused));$('#pause-gallery').textContent=paused?'Resume rotation':'Pause rotation';
+  $('#pause-gallery').onclick=()=>{paused=!paused;if(intro)stopIntro();$('#pause-gallery').setAttribute('aria-pressed',String(paused));$('#pause-gallery').textContent=paused?'Resume rotation':'Pause rotation';saveGallery();wake();};
+  new IntersectionObserver(([entry])=>{galleryVisible=entry.isIntersecting;if(!galleryVisible&&intro)stopIntro();if(galleryVisible){lastTime=0;wake();}},{threshold:0}).observe(stage);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&intro)stopIntro();if(!document.hidden){lastTime=0;wake();}});
+  window.addEventListener('pagehide',saveGallery);
+  document.querySelectorAll('a[href]').forEach(a=>a.addEventListener('click',saveGallery));
   reduced.addEventListener('change',()=>{if(reduced.matches){intro=false;angle=target;cancelIntro();lastVisualRotation=null;}wake();});
   window.addEventListener('resize',size);brandIntro();size();status();
   const hash=location.hash.slice(1),hashIndex=projects.findIndex(x=>x.slug===hash);
-  if(hashIndex>=0){intro=false;cancelIntro();target=angle=-hashIndex*step;openProject(hashIndex);}
+  if(hashIndex>=0){intro=false;cancelIntro();target=angle=-hashIndex*step;returningFromHistory=true;openProject(hashIndex);returningFromHistory=false;}
+  if(restored){try{if(sessionStorage.getItem(location.pathname+':return')==='logo'){sessionStorage.removeItem(location.pathname+':return');scrollTo(0,0);}}catch{}}
 })();
