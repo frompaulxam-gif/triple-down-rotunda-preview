@@ -7,8 +7,11 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const count = projects.length, slots = count * 2, step = 360 / slots;
   const introPasses=4,introSteps=count*introPasses;
-  const introStart=900,initialSpeed=3.5,buildSpeed=4.5,peakSpeed=22;
-  const buildSeconds=slots*2/(initialSpeed+buildSpeed),rushSeconds=1,brakeSeconds=.45;
+  const introStart=900,initialSpeed=3.5,approachSpeed=4.5,buildSpeed=6.5,peakSpeed=22;
+  const fillThreshold=slots*.85,approachSeconds=fillThreshold*2/(initialSpeed+approachSpeed);
+  const finalFillSeconds=(slots-fillThreshold)*2/(approachSpeed+buildSpeed);
+  const buildSeconds=approachSeconds+finalFillSeconds,rushSeconds=.9,brakeSeconds=.6;
+  const idleSpeed=1.68;
   const rushDistance=(buildSpeed+peakSpeed)*rushSeconds/2;
   const cruiseSeconds=(introSteps-slots-rushDistance-peakSpeed*brakeSeconds/2)/peakSpeed;
   const motionEnd=introStart+(buildSeconds+rushSeconds+cruiseSeconds+brakeSeconds)*1000;
@@ -16,7 +19,7 @@
   let angle = 0, target = 0, selected = 0, radius = 410, cardW = 190, cardH = 250;
   let raf = 0, lastTime = 0, startTime = performance.now(), intro = !reduced.matches;
   let drag = null, dragged = false, snapTimer = 0, returnFocus = null, currentProject = 0;
-  let lastInteract=performance.now()+introDuration, keyboardMode=false, lockupAnimations=[], introTimer=0, lastVisualRotation=null;
+  let lastInteract=-Infinity, keyboardMode=false, lockupAnimations=[], introTimer=0, lastVisualRotation=null;
   const escape = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const mod = (n,m) => ((n%m)+m)%m;
   const logo = (p,cls='brand-logo') => p.logo ? `<img class="client-logo ${cls}" data-brand="${p.slug}" src="${p.logo}" alt="${escape(p.title)}">` : `<span class="plain-wordmark">${escape(p.title)}</span>`;
@@ -29,11 +32,15 @@
   function introMotion(elapsed){
     const t=(elapsed-introStart)/1000;
     let distance=0,speed=0;
-    // Give the first two complete sets a readable, gently tightening cadence.
-    if(t>0&&t<=buildSeconds){
-      const q=t/buildSeconds;
-      distance=initialSpeed*t+(buildSpeed-initialSpeed)*buildSeconds*(q*q*q-.5*q*q*q*q);
-      speed=initialSpeed+(buildSpeed-initialSpeed)*q*q*(3-2*q);
+    // Tighten the cadence gently, then lift the pace as the final 15% arrives.
+    if(t>0&&t<=approachSeconds){
+      const q=t/approachSeconds;
+      distance=initialSpeed*t+(approachSpeed-initialSpeed)*approachSeconds*(q*q*q-.5*q*q*q*q);
+      speed=initialSpeed+(approachSpeed-initialSpeed)*q*q*(3-2*q);
+    }else if(t>approachSeconds&&t<=buildSeconds){
+      const q=(t-approachSeconds)/finalFillSeconds;
+      distance=fillThreshold+finalFillSeconds*(approachSpeed*q+(buildSpeed-approachSpeed)*(q*q*q-.5*q*q*q*q));
+      speed=approachSpeed+(buildSpeed-approachSpeed)*q*q*(3-2*q);
     }else if(t>buildSeconds&&t<=buildSeconds+rushSeconds){
       const q=(t-buildSeconds)/rushSeconds;
       distance=slots+rushSeconds*(buildSpeed*q+(peakSpeed-buildSpeed)*(q*q*q-.5*q*q*q*q));
@@ -46,6 +53,13 @@
       speed=peakSpeed*(1-q*q*(3-2*q));
     }else if(t>=buildSeconds+rushSeconds+cruiseSeconds+brakeSeconds){distance=introSteps;}
     return {distance,speed,normalisedSpeed:speed/peakSpeed};
+  }
+  function introRotation(elapsed,motion){
+    // Blend the braking ring into its idle speed instead of coming to rest.
+    const coastSeconds=Math.max(0,(elapsed-motionEnd+brakeSeconds*1000)/1000);
+    const q=Math.min(coastSeconds/brakeSeconds,1);
+    const coastDistance=idleSpeed*(brakeSeconds*(q*q*q-.5*q*q*q*q)+Math.max(0,coastSeconds-brakeSeconds));
+    return -motion.distance*step*3-coastDistance;
   }
   function updateBrandReel(motion){
     reel.style.transform=`translateY(${-motion.distance*reelSlot}px)`;
@@ -137,6 +151,7 @@
   function draw(t){
     raf=0;
     const dt=lastTime?Math.min((t-lastTime)/16.667,3):1;lastTime=t;
+    const wasIntro=intro;
     let spread=1,spin=0,introElapsed=Infinity,buildDistance=Infinity;
     if(intro){
       const elapsed=t-startTime,p=Math.min(elapsed/introDuration,1);
@@ -149,12 +164,12 @@
       spread=.26+.4*built+.44*growth*growth*(3-2*growth);
       const settle=Math.max(0,Math.min((elapsed-motionEnd+120)/400,1));
       spread+=(1-spread)*(1-Math.pow(1-settle,3));
-      spin=-motion.distance*step*3;
+      spin=introRotation(elapsed,motion);
       updateBrandReel(motion);
       if(p===1){angle+=spin;target+=spin;spin=0;intro=false;finishLockup();}
     }
-    const idle=!intro&&!drag&&!dialog.open&&!about.open&&index.hidden&&!reduced.matches&&performance.now()-lastInteract>1800&&!(keyboardMode&&stage.contains(document.activeElement));
-    if(idle)target-=.028*dt;
+    const idle=!wasIntro&&!drag&&!dialog.open&&!about.open&&index.hidden&&!reduced.matches&&performance.now()-lastInteract>1800&&!(keyboardMode&&stage.contains(document.activeElement));
+    if(idle){const drift=idleSpeed*dt/60;target-=drift;angle-=drift;}
     angle+=(target-angle)*(reduced.matches?1:1-Math.pow(.84,dt));
     if(Math.abs(target-angle)<.005)angle=target;
     const rotation=angle+spin;
@@ -183,7 +198,7 @@
     if(!reduced.matches || intro || Math.abs(target-angle)>.005)wake();
   }
   function wake(){if(!raf)raf=requestAnimationFrame(draw);}
-  function stopIntro(){lastInteract=performance.now();if(intro){intro=false;angle=target;cancelIntro();lastVisualRotation=null;}}
+  function stopIntro(){lastInteract=performance.now();if(intro){intro=false;angle=target=lastVisualRotation??angle;cancelIntro();lastVisualRotation=null;}}
   function move(d){stopIntro();target=Math.round(target/step)*step+d*step;wake();}
   function snap(){target=Math.round(target/step)*step;wake();}
   stage.addEventListener('wheel',e=>{
