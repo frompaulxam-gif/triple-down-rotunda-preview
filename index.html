@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <title>Triple Down — Culture-led. Built to scale.</title>
+  <meta name="description" content="Independent culture. Commercial instinct. Explore Triple Down's work across music, hospitality, brands and experiences.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/archivo.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/serif-italic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=20261028-motion-4">
+  <script src="projects.js?v=20261028-motion-4" defer></script>
+  <script src="app.js?v=20261028-motion-4" defer></script>
+</head>
+<body>
+  <svg class="motion-filters" width="0" height="0" aria-hidden="true" focusable="false"><defs><filter id="card-motion-filter" x="-20%" y="-5%" width="140%" height="110%" color-interpolation-filters="sRGB"><feGaussianBlur id="card-directional-blur" in="SourceGraphic" stdDeviation="0 0" edgeMode="duplicate"/></filter></defs></svg>
+  <a class="skip-link" href="#work-index">Skip to project index</a>
+  <header class="header">
+    <a href="./" class="wordmark" aria-label="Triple Down home"><img src="assets/triple-down.svg" alt=""><span class="logo-type">TRIPLE<br>DOWN GROUP</span></a>
+    <p class="header-note">Independent culture.<br>Commercial instinct.</p>
+    <nav aria-label="Main"><button id="about-button">About us</button><a href="mailto:nico@tripledown.group">Let's talk <span class="contact-dot" aria-hidden="true"></span></a></nav>
+  </header>
+
+  <div class="intro-lockup" id="intro-lockup" aria-hidden="true"><img class="intro-tdg" src="assets/triple-down.svg" alt=""><span class="intro-cross">×</span><div class="logo-window"><div class="logo-reel" id="logo-reel"></div></div><span class="intro-name">TRIPLE<br>DOWN GROUP</span></div>
+  <main>
+    <section class="stage" aria-label="Our work, interactive project gallery" tabindex="-1">
+      <div class="hero-title"><p>Culture-led. Built to scale.</p><h1><em>Culture in motion.</em></h1></div>
+      <div class="scene" id="scene"><div class="ring" id="ring"></div></div>
+      <div class="gallery-status"><span class="status-kind" id="active-kind"></span><button id="active-title" aria-label="Open current case study"></button></div>
+      <div class="gallery-footer">
+        <div class="scroll-hint"><span class="scroll-line" aria-hidden="true"></span><span>Scroll to explore</span></div>
+        <button class="index-button" id="index-button" aria-expanded="false" aria-controls="work-index"><span class="index-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Project index</span><sup>10</sup></button>
+        <div class="gallery-nav"><span id="position" aria-live="polite" aria-atomic="true">01 / 10</span><button id="previous" aria-label="Previous project">←</button><button id="next" aria-label="Next project">→</button></div>
+      </div>
+      <p class="drag-hint">Drag to rotate · Click to discover</p>
+    </section>
+    <section id="work-index" class="work-index" aria-label="Project index" hidden><div class="index-heading"><h2>Our work</h2><button id="close-index" aria-label="Close project index">Close <span aria-hidden="true">×</span></button></div><div id="project-list"></div></section>
+    <noscript><p class="noscript">Explore the original <a href="https://tripledown.group">Triple Down website</a>. This interactive gallery uses JavaScript.</p></noscript>
+  </main>
+
+  <dialog id="project-dialog" class="project-dialog" aria-labelledby="project-title">
+    <div class="project-top"><a href="./" class="wordmark small" aria-label="Triple Down home"><img src="assets/triple-down.svg" alt=""></a><button class="close-project">Back to work <span aria-hidden="true">×</span></button></div>
+    <div id="project-content"></div>
+  </dialog>
+  <dialog id="about-dialog" class="about-dialog" aria-labelledby="about-title"><button class="close-about" aria-label="Close about">Close <span aria-hidden="true">×</span></button><p class="about-kicker">Triple Down Group</p><h2 id="about-title">Culture-led.<br><em>Built to scale.</em></h2><p class="about-intro">We help brands build the structure, strategy &amp; systems required for serious growth.</p><p>Our work brings together music, hospitality, creative direction and the people who make culture happen.</p><a class="email" href="mailto:nico@tripledown.group">nico@tripledown.group</a><div class="about-services"><span>Brand &amp; strategy</span><span>Creative direction</span><span>Marketing &amp; content</span><span>Events &amp; experiences</span><span>Venue development</span></div></dialog>
+</body>
+</html>
