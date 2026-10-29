@@ -8,8 +8,10 @@
   const experience=$('.dimension-viewport'),gallery=$('.dimension-gallery'),track=$('.dimension-track'),thread=$('.dimension-thread');
   const caption=$('.dimension-caption'),category=$('.dimension-category'),indexButtons=[...section.querySelectorAll('[data-dimension-jump]')];
   const reduced=matchMedia('(prefers-reduced-motion: reduce)'),cards=[],svgNS='http://www.w3.org/2000/svg';
-  const signal=document.createElementNS(svgNS,'g'),tail=document.createElementNS(svgNS,'path'),ball=document.createElementNS(svgNS,'circle');
-  signal.classList.add('dimension-signal');tail.classList.add('dimension-signal-tail');ball.classList.add('dimension-signal-ball');ball.setAttribute('r','5');signal.append(tail,ball);thread.append(signal);
+  const signal=document.createElementNS(svgNS,'g'),tail=document.createElementNS(svgNS,'path'),signalLogo=document.createElementNS(svgNS,'image');
+  signal.classList.add('dimension-signal');tail.classList.add('dimension-signal-tail');signalLogo.classList.add('dimension-signal-logo');
+  signalLogo.setAttribute('href',document.querySelector('.site-header .wordmark img').src);signalLogo.setAttribute('width','24');signalLogo.setAttribute('height',String(24*700/1160));signalLogo.setAttribute('preserveAspectRatio','xMidYMid meet');
+  signal.append(tail,signalLogo);thread.append(signal);
   let selected=0,position=0,target=0,width,height,cardW,cardH,pitch,centerY,entered=false,leaving=0;
   let raf=0,lastFrame=0,scrollFrame=0,lastScrollY=scrollY,snapTimer=0,lastWheel=0,wheelDirection=0,pointer=null,moved=false,settledIndex=0,gestureStart=0,gestureDelta=0;
   let captionAnimations=[],points=[],reserveKey='',reservedCaptionHeight=0,lastPulse=-1,lastPosition=0;
@@ -61,6 +63,19 @@
     if(animate&&!reduced.matches)for(const el of[caption,category])captionAnimations.push(el.animate([{opacity:0,translate:'0 7px'},{opacity:1,translate:'0 0'}],{duration:240,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'}));
   }
   function pointAt(slot){const lower=clamp(Math.floor(slot),0,points.length-2),fraction=clamp(slot-lower,0,1),a=points[lower],b=points[lower+1];return{x:a.x+(b.x-a.x)*fraction,y:a.y+(b.y-a.y)*fraction};}
+  function cardInterval(card,a,b){
+    // Intersect the shared connector with the photo's actual rotated bounds.
+    const angle=-card.rotation*Math.min(Math.abs(card.slot-2-position),1)*Math.PI/180,cos=Math.cos(angle),sin=Math.sin(angle);
+    const x=a.x-width/2-card.offset,y=a.y-card.slot*pitch,dx=b.x-a.x,dy=b.y-a.y;
+    const origin=[x*cos-y*sin,x*sin+y*cos],vector=[dx*cos-dy*sin,dx*sin+dy*cos],half=[cardW/2,cardH/2];
+    let enter=0,exit=1;
+    for(let axis=0;axis<2;axis++){
+      if(Math.abs(vector[axis])<.00001){if(Math.abs(origin[axis])>half[axis])return null;continue;}
+      const first=(-half[axis]-origin[axis])/vector[axis],last=(half[axis]-origin[axis])/vector[axis];
+      enter=Math.max(enter,Math.min(first,last));exit=Math.min(exit,Math.max(first,last));
+    }
+    return enter<=exit?{enter,exit}:null;
+  }
   function pulse(index){
     index=mod(index,count);if(reduced.matches||index===lastPulse)return;lastPulse=index;
     for(const card of cards.filter(card=>card.index===mod(index,count))){pulses.get(card.el)?.cancel();const animation=card.el.animate([{'--arrival-light':0},{'--arrival-light':.23,offset:.16},{'--arrival-light':0}],{duration:550,easing:'ease-out'});pulses.set(card.el,animation);animation.onfinish=()=>pulses.delete(card.el);}
@@ -70,12 +85,19 @@
     for(const card of cards){const distance=Math.abs(card.slot-2-position),active=distance<.5;card.el.style.transform=`translate(-50%,-50%) translateX(${card.offset}px) rotate(${card.rotation*Math.min(distance,1)}deg)`;card.el.classList.toggle('active',active);card.el.tabIndex=active?0:-1;card.el.setAttribute('aria-hidden',String(distance>1.2));card.el.inert=distance>1.2;}
     const moving=Math.abs(target-position)>.002||pointer;
     if(reduced.matches||!moving){signal.style.opacity='0';return;}
-    const direction=Math.sign(target-position)||Math.sign(position-lastPosition)||1,from=direction>0?Math.floor(position):Math.ceil(position),fraction=Math.abs(position-from);
-    // The light leads the moving cards: its exposed flight travels down the
-    // diagonal instead of cancelling out the gallery's translation.
-    const flight=Math.min(1,fraction*1.55),slot=2+from+direction*flight,point=pointAt(slot),behind=pointAt(slot-direction*.065);
-    ball.setAttribute('cx',point.x);ball.setAttribute('cy',point.y);tail.setAttribute('d',`M${behind.x} ${behind.y} L${point.x} ${point.y}`);signal.style.opacity=flight<.95?'1':'0';
-    const arrival=1-cardH/(2*pitch);if(flight>=arrival&&flight<.95)pulse(from+direction);
+    const direction=Math.sign(target-position)||Math.sign(position-lastPosition)||1,from=Math.floor(position),fraction=position-from;
+    const source=cards[2+from],destination=cards[3+from],a=pointAt(2+from),b=pointAt(3+from);
+    if(!source||!destination){signal.style.opacity='0';return;}
+    const departure=cardInterval(source,a,b),arrival=cardInterval(destination,a,b);
+    if(!departure||!arrival){signal.style.opacity='0';return;}
+    const length=Math.hypot(b.x-a.x,b.y-a.y),padding=10/length,start=departure.exit+padding,end=arrival.enter-padding;
+    if(end<=start){signal.style.opacity='0';return;}
+    // Start on the exposed line immediately and cross its whole visible gap.
+    // Mapping only the visible gap avoids spending the start hidden by a photo.
+    // One canonical segment keeps the marker continuous if a gesture reverses.
+    const slot=2+from+start+(end-start)*fraction,point=pointAt(slot),behind=pointAt(slot-direction*.04);
+    signalLogo.setAttribute('x',point.x-12);signalLogo.setAttribute('y',point.y-12*700/1160);tail.setAttribute('d',`M${behind.x} ${behind.y} L${point.x} ${point.y}`);signal.style.opacity='1';
+    if(direction>0?fraction>.98:fraction<.02)pulse(from+(direction>0?1:0));
   }
   function wake(){if(!raf&&!document.hidden)raf=requestAnimationFrame(tick);}
   function tick(now){

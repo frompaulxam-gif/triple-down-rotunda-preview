@@ -72,7 +72,7 @@
 .dimension-thread>path{stroke:#bfc1c4;stroke-width:1;opacity:.7;stroke-linecap:round;stroke-linejoin:round}
 .dimension-signal{opacity:0;filter:drop-shadow(0 0 3px #7d899b88) drop-shadow(0 0 9px #fff);pointer-events:none}
 .dimension-thread .dimension-signal-tail{stroke:#fff;stroke-width:2.4;opacity:.9;stroke-linecap:round}
-.dimension-signal-ball{fill:none;stroke:#111;stroke-width:1.5}
+.dimension-signal-logo{pointer-events:none}
 .dimension-card::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:#fff;opacity:var(--arrival-light,0);box-shadow:inset 0 0 24px 2px #fff}
 .is-work-active .dimension-viewport{touch-action:pinch-zoom}
 @media(prefers-reduced-motion:reduce){.dimension-signal{display:none}.dimension-card::after{display:none}}

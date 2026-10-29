@@ -135,7 +135,7 @@
   animation: clients-drift 42s linear infinite;
 }
 
-.home-page .clients-marquee:is(:hover, :focus-within) .clients-marquee-track {
+.home-page .clients-marquee:focus-within .clients-marquee-track {
   animation-play-state: paused;
 }
 
