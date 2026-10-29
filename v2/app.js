@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const projects = window.PROJECTS.map(p=>({...p,cover:'../'+p.cover,images:p.images.map(src=>'../'+src),logo:p.logo?'../'+p.logo:null,cardLogo:p.cardLogo?'../'+p.cardLogo:undefined}));
+  const projects = window.PROJECTS.map(p=>({...p,cover:'../'+p.cover,images:p.images.map(src=>'../'+src),logo:p.slug==='moonshine'?'brand-assets/moonshine-wordmark.svg':p.logo?'../'+p.logo:null,cardLogo:p.cardLogo?'../'+p.cardLogo:undefined}));
   const $ = s => document.querySelector(s);
   const stage = $('.stage'), ring = $('#ring'), scene = $('#scene');
   const dialog = $('#project-dialog'), index = $('#work-index');
@@ -22,6 +22,7 @@
   const introDuration=motionEnd+1050;
   let angle = Number(restored?.angle)||0, target = Number(restored?.angle)||0, selected = 0, radius = 410, cardW = 190, cardH = 250;
   let raf = 0, lastTime = 0, startTime = performance.now(), intro = !reduced.matches&&!restored;
+  if(intro)document.body.classList.add('in-intro');
   let drag = null, dragged = false, snapTimer = 0, returnFocus = null, currentProject = 0;
   let lastInteract=-Infinity, keyboardMode=false, lockupAnimations=[], introTimer=0, lastVisualRotation=null;
   const escape = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -30,7 +31,7 @@
   const cardLogo=p=>logo(p.cardLogo?{...p,logo:p.cardLogo}:p);
   const reel=$('#logo-reel'),cross=$('.intro-cross'),photoBlurNode=$('#card-directional-blur');
   let lastBlurValue='',lastBlurEnabled=null;
-  let reelSlot=100;
+  let reelSlot=100,lastReelIndex=null,initialised=false;
   function finishLockup(){document.body.classList.remove('in-intro');$('#intro-lockup').hidden=true;saveGallery();}
   function saveGallery(){try{sessionStorage.setItem(homeKey,JSON.stringify({angle:lastVisualRotation??angle,paused,scroll:scrollY,seen:true}));}catch{}}
   function cancelIntro(){clearTimeout(introTimer);lockupAnimations.forEach(a=>a.cancel());finishLockup();}
@@ -67,8 +68,14 @@
     return -motion.distance*step*3-coastDistance;
   }
   function updateBrandReel(motion){
-    reel.style.transform=`translateY(${-motion.distance*reelSlot}px)`;
-    reel.style.filter=`blur(${(motion.normalisedSpeed*3.2).toFixed(2)}px)`;
+    const position=Math.floor(motion.distance),fraction=motion.distance-position;
+    // Keep only five neighbouring rows mounted. Blur the small slots, never a tall GPU layer.
+    if(position!==lastReelIndex){
+      reel.innerHTML=Array.from({length:5},(_,i)=>`<div class="intro-logo">${logo(projects[mod(position+i-2,count)],'')}</div>`).join('');
+      lastReelIndex=position;
+    }
+    reel.style.transform=`translateY(${-(2+fraction)*reelSlot}px)`;
+    reel.style.setProperty('--brand-motion-blur',`${(motion.normalisedSpeed*3.2).toFixed(2)}px`);
     cross.style.filter=`blur(${(motion.normalisedSpeed*.8).toFixed(2)}px)`;
   }
   function brandIntro(){
@@ -77,24 +84,27 @@
     const mobile=innerWidth<701,at=ms=>ms/introDuration;
     sceneIntroOffset=Math.min(0,innerHeight*.52-scene.getBoundingClientRect().top);
     reelSlot=mobile?80:100;
-    const brands=[...Array.from({length:introPasses},()=>projects).flat(),projects[0]];
-    reel.innerHTML=brands.map(p=>`<div class="intro-logo">${logo(p,'')}</div>`).join('');
+    lastReelIndex=null;
     reel.dataset.cycles=String(introPasses);reel.dataset.steps=String(introSteps);updateBrandReel(introMotion(0));
     const header=$('.header .wordmark img').getBoundingClientRect(),fly=$('.intro-tdg');
     Object.assign(fly.style,{left:header.x+'px',top:header.y+'px',width:header.width+'px',height:header.height+'px'});
-    const scale=mobile?2:2.7,rowY=innerHeight*.29;
+    const textTarget=$('.header .logo-type').getBoundingClientRect();
+    const lockupWidth=textTarget.right-header.x;
+    const scale=Math.min(mobile?1.7:2.1,(innerWidth-44)/lockupWidth),rowY=innerHeight*.29;
+    $('#intro-lockup').style.setProperty('--intro-row-y',rowY+'px');
     const centreX=innerWidth*.5-header.width*scale*.5-header.x;
     const centreY=rowY-header.height*scale*.5-header.y;
-    const leftX=centreX-(mobile?80:130);
+    const lockupLeft=(innerWidth-lockupWidth*scale)/2;
+    const leftX=lockupLeft-header.x;
     const centred=`translate(${centreX}px,${centreY}px) scale(${scale})`;
     const left=`translate(${leftX}px,${centreY}px) scale(${scale})`;
     lockupAnimations.push(fly.animate([
-      {transform:`translate(${centreX}px,${centreY+8}px) scale(${scale*.9})`,opacity:0,filter:'invert(1) blur(7px)',offset:0,easing:'ease-out'},
-      {transform:centred,opacity:1,filter:'invert(1) blur(0px)',offset:at(250)},
-      {transform:centred,opacity:1,filter:'invert(1) blur(0px)',offset:at(380),easing:'cubic-bezier(.22,1,.36,1)'},
-      {transform:left,opacity:1,filter:'invert(1) blur(0px)',offset:at(760)},
-      {transform:left,opacity:1,filter:'invert(1) blur(0px)',offset:at(motionEnd+450),easing:'cubic-bezier(.22,1,.36,1)'},
-      {transform:'translate(0,0) scale(1)',opacity:1,filter:'invert(1) blur(0px)',offset:1}
+      {transform:`translate(${centreX}px,${centreY+8}px) scale(${scale*.9})`,opacity:0,filter:'blur(7px)',offset:0,easing:'ease-out'},
+      {transform:centred,opacity:1,filter:'blur(0px)',offset:at(250)},
+      {transform:centred,opacity:1,filter:'blur(0px)',offset:at(380),easing:'cubic-bezier(.22,1,.36,1)'},
+      {transform:left,opacity:1,filter:'blur(0px)',offset:at(760)},
+      {transform:left,opacity:1,filter:'blur(0px)',offset:at(motionEnd+450),easing:'cubic-bezier(.22,1,.36,1)'},
+      {transform:'translate(0,0) scale(1)',opacity:1,filter:'blur(0px)',offset:1}
     ],{duration:introDuration,fill:'both',easing:'linear'}));
     lockupAnimations.push(cross.animate([
       {opacity:0,transform:'translateX(-8px)',offset:0},
@@ -106,13 +116,13 @@
     ],{duration:introDuration,fill:'both',easing:'linear'}));
     lockupAnimations.push($('.logo-window').animate([
       {opacity:0,offset:0},{opacity:0,offset:at(800),easing:'ease-out'},{opacity:1,offset:at(860)},
-      {opacity:1,transform:'translateY(0)',filter:'blur(0px)',offset:at(motionEnd+50),easing:'ease-out'},
-      {opacity:0,transform:'translateY(-9px)',filter:'blur(3px)',offset:at(motionEnd+290)},
+      {opacity:1,transform:'translateY(0)',offset:at(motionEnd+50),easing:'ease-out'},
+      {opacity:0,transform:'translateY(-9px)',offset:at(motionEnd+290)},
       {opacity:0,offset:1}
     ],{duration:introDuration,fill:'both',easing:'linear'}));
-    const textTarget=$('.header .logo-type').getBoundingClientRect(),name=$('.intro-name');
+    const name=$('.intro-name');
     Object.assign(name.style,{left:textTarget.x+'px',top:textTarget.y+'px'});
-    const textX=innerWidth*.5+(mobile?17:12)-textTarget.x,textY=rowY-textTarget.height*scale*.5-textTarget.y;
+    const textX=lockupLeft+(textTarget.x-header.x)*scale-textTarget.x,textY=rowY-textTarget.height*scale*.5-textTarget.y;
     const textPose=`translate(${textX}px,${textY}px) scale(${scale})`;
     lockupAnimations.push(name.animate([
       {opacity:0,transform:textPose,filter:'blur(4px)',offset:0},
@@ -121,12 +131,13 @@
       {opacity:1,transform:textPose,offset:at(motionEnd+450),easing:'cubic-bezier(.22,1,.36,1)'},
       {opacity:1,transform:'translate(0,0) scale(1)',offset:1}
     ],{duration:introDuration,fill:'both',easing:'linear'}));
+    $('#intro-lockup').classList.add('is-ready');
     introTimer=setTimeout(finishLockup,introDuration);
   }
   const cards = [...projects,...projects].map((p,i) => {
     const projectIndex=i%count; const photo=i<count?p.cover:p.images[0];
     const el = document.createElement(i<count?'button':'div');
-    el.className = 'project-card'; el.dataset.project = p.slug;
+    el.className = 'project-card'; el.dataset.project = p.slug;el.style.opacity='0';
     el.setAttribute('aria-label', `Open ${p.title} story`);
     if(i>=count)el.setAttribute('aria-hidden','true');
     el.innerHTML = `<span class="card-face"><img class="card-photo" src="${photo}" alt="${escape(p.title)} project" draggable="false" fetchpriority="${i<3?'high':'auto'}"><span class="wash"></span><span class="card-caption"><span class="name">${cardLogo(p)}</span></span></span>`;
@@ -140,7 +151,7 @@
     const w=innerWidth,h=innerHeight;
     const mobile=w<701;
     radius=mobile?Math.min(w*.57,300):Math.min(w*.378,h*.66,570);
-    cardW=mobile?Math.min(76,w*.17):Math.min(w*.117,h*.225,190)*(1-radius/1900);
+    cardW=mobile?Math.min(80,Math.max(62,w*.18)):Math.min(w*.117,h*.225,190)*(1-radius/1900);
     cardH=cardW*(mobile?1.38:1.39);
     ring.style.setProperty('--card-width',cardW+'px');ring.style.setProperty('--card-height',cardH+'px');
     scene.style.perspective=(mobile?1050:1500)+'px';
@@ -188,7 +199,9 @@
     const blurValue=`${photoBlur.toFixed(2)} ${Math.min(.3,photoBlur*.04).toFixed(2)}`;
     if(blurValue!==lastBlurValue){photoBlurNode.setAttribute('stdDeviation',blurValue);lastBlurValue=blurValue;}
     const blurEnabled=photoBlur>.05;
-    if(blurEnabled!==lastBlurEnabled){ring.style.setProperty('--card-photo-filter',blurEnabled?'url(#card-motion-filter)':'none');lastBlurEnabled=blurEnabled;}
+    if(innerWidth<701){ring.style.setProperty('--card-photo-filter',blurEnabled?`blur(${Math.min(2,photoBlur*.3).toFixed(2)}px)`:'none');}
+    else if(blurEnabled!==lastBlurEnabled){ring.style.setProperty('--card-photo-filter',blurEnabled?'url(#card-motion-filter)':'none');}
+    lastBlurEnabled=blurEnabled;
     cards.forEach((el,i)=>{
       const theta=(i*step+angle+spin)*Math.PI/180;
       const cos=Math.cos(theta),sin=Math.sin(theta),r=radius*spread;
@@ -208,7 +221,7 @@
     status();
     if(intro||(!paused&&!reduced.matches&&!dialog.open&&!index.open)||drag||Math.abs(target-angle)>.005)wake();
   }
-  function wake(){if(!raf&&galleryVisible&&!document.hidden)raf=requestAnimationFrame(draw);}
+  function wake(){if(initialised&&!raf&&galleryVisible&&!document.hidden)raf=requestAnimationFrame(draw);}
   function stopIntro(){lastInteract=performance.now();if(intro){intro=false;angle=target=lastVisualRotation??angle;cancelIntro();lastVisualRotation=null;}}
   document.addEventListener('focusin',e=>{if(intro&&e.target.closest('.header,.hero-title,.gallery-status,.work-showcase'))stopIntro();});
   addEventListener('scroll',()=>{if(intro&&stage.getBoundingClientRect().bottom<innerHeight*.75)stopIntro();},{passive:true});
@@ -297,8 +310,15 @@
   window.addEventListener('pagehide',saveGallery);
   document.querySelectorAll('a[href]').forEach(a=>a.addEventListener('click',saveGallery));
   reduced.addEventListener('change',()=>{if(reduced.matches){intro=false;angle=target;cancelIntro();lastVisualRotation=null;}wake();});
-  window.addEventListener('resize',size);brandIntro();size();status();
+  let viewportWidth=innerWidth,viewportHeight=innerHeight;
+  window.addEventListener('resize',()=>{if(intro&&(Math.abs(innerWidth-viewportWidth)>20||Math.abs(innerHeight-viewportHeight)>120))stopIntro();viewportWidth=innerWidth;viewportHeight=innerHeight;lastBlurEnabled=null;size();});
+  async function initialise(){
+  const fontsReady=await Promise.race([document.fonts.ready.then(()=>true),new Promise(resolve=>setTimeout(()=>resolve(false),1200))]);
+  if(!fontsReady)intro=false;
+  initialised=true;startTime=performance.now();brandIntro();size();status();
   const hash=location.hash.slice(1),hashIndex=projects.findIndex(x=>x.slug===hash);
   if(hashIndex>=0){intro=false;cancelIntro();target=angle=-hashIndex*step;returningFromHistory=true;openProject(hashIndex);returningFromHistory=false;}
   if(restored){try{if(sessionStorage.getItem(location.pathname+':return')==='logo'){sessionStorage.removeItem(location.pathname+':return');scrollTo(0,0);}}catch{}}
+  }
+  initialise();
 })();

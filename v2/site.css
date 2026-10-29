@@ -1,11 +1,19 @@
 /* Agency extension. Loaded after orbit.css; the original gallery owns its
    card transforms and introduction. All new layout stays in document flow. */
 
+@font-face {
+  font-family: TDBebas;
+  src: url(brand-assets/bebas-neue.woff2) format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 body.agency-site {
   --site-width: 1200px;
   --reading-width: 70ch;
   --site-gutter: clamp(22px, 3.2vw, 48px);
-  --site-header-height: 96px;
+  --site-header-height: 114px;
   --section-space: clamp(74px, 8vw, 128px);
   --body-muted: oklch(.43 0 0);
   --field-line: oklch(.67 0 0);
@@ -87,25 +95,31 @@ body.agency-site {
   animation: none;
 }
 
-.site-header .wordmark {
+.agency-site .wordmark {
   flex: 0 0 auto;
+  flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   min-height: 44px;
 }
 
-.site-header .wordmark img {
-  width: 72px;
-  height: 44px;
+.agency-site .wordmark img {
+  width: 110px;
+  height: auto;
+  aspect-ratio: 1160 / 700;
   object-fit: contain;
+  filter: none;
 }
 
-.site-header .logo-type {
-  font-family: Archivo, Arial, sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -.1px;
+.agency-site .logo-type,
+.agency-site .intro-name {
+  font-family: TDBebas, 'Arial Narrow', Arial, sans-serif;
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: .9;
+  letter-spacing: normal;
+  white-space: nowrap;
 }
 
 .site-header nav.desktop-nav {
@@ -1249,7 +1263,7 @@ body.agency-site {
 
 @media (max-width: 1100px) {
   body.agency-site {
-    --site-header-height: 86px;
+    --site-header-height: 106px;
   }
 
   .agency-site .header.site-header {
@@ -1295,28 +1309,29 @@ body.agency-site {
 @media (max-width: 700px) {
   body.agency-site {
     --site-gutter: 22px;
-    --site-header-height: 77px;
+    --site-header-height: 80px;
     --section-space: 72px;
     font-size: 16px;
   }
 
   .agency-site .header.site-header {
     min-height: var(--site-header-height);
-    gap: 16px;
+    gap: 12px;
     padding: 16px var(--site-gutter);
   }
 
-  .site-header .wordmark {
-    gap: 8px;
+  .agency-site .wordmark {
+    gap: 12px;
   }
 
-  .site-header .wordmark img {
-    width: 52px;
-    height: 33px;
+  .agency-site .wordmark img {
+    width: 72px;
+    height: auto;
   }
 
-  .site-header .logo-type {
-    font-size: 8px;
+  .agency-site .logo-type,
+  .agency-site .intro-name {
+    font-size: 26px;
   }
 
   .agency-site .menu-toggle {
@@ -1606,6 +1621,21 @@ body.agency-site {
   }
 }
 
+@media (max-width: 360px) {
+  .agency-site .wordmark {
+    gap: 8px;
+  }
+
+  .agency-site .wordmark img {
+    width: 56px;
+  }
+
+  .agency-site .logo-type,
+  .agency-site .intro-name {
+    font-size: 20px;
+  }
+}
+
 @media (max-width: 370px) {
   .hero-actions {
     flex-direction: column;
@@ -1641,7 +1671,21 @@ body.agency-site {
 .proof-image figcaption,.mobile-proof figcaption{margin-top:12px;font-size:13px;color:var(--body-muted);line-height:1.5}
 .project-dialog .project-top{position:sticky;top:0;background:white;align-items:center}
 
-.project-dialog .project-top .wordmark{mix-blend-mode:normal}
-.project-dialog .project-top .wordmark img{filter:invert(1)}
+.project-dialog .project-top .wordmark{mix-blend-mode:normal;color:var(--ink)}
+.project-dialog .project-top .wordmark img{filter:none}
 
 .agency-site .work-index::backdrop { background: rgba(255,255,255,.94); }
+
+@media(max-width:700px){.project-dialog .project-top{gap:10px;padding:16px 22px;min-height:80px;height:auto}.project-dialog .close-project{flex:0 0 auto;padding:0 8px;font-size:10px;white-space:nowrap;margin-top:0}.project-dialog .close-project span{font-size:14px;margin-left:5px}}
+
+.project-dialog .close-project .back-label-full,.project-dialog .close-project .back-label-short{font:inherit;margin:0}
+.project-dialog .close-project .back-label-short{display:none}
+@media(max-width:360px){
+ .agency-site .site-header{padding-inline:16px;gap:8px}
+ .agency-site .wordmark{gap:6px}
+ .agency-site .wordmark img{width:44px}
+ .agency-site .logo-type,.agency-site .intro-name{font-size:18px}
+ .project-dialog .project-top{padding-inline:16px;gap:8px}
+ .project-dialog .close-project .back-label-full{display:none}
+ .project-dialog .close-project .back-label-short{display:inline}
+}

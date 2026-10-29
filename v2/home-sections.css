@@ -103,9 +103,9 @@
   height: 48px;
 }
 
-.home-page .home-clients img[src*="logo-moonshine-wordmark"] {
-  filter: invert(1) contrast(1.2);
-  mix-blend-mode: multiply;
+.home-page .home-clients img[src*="moonshine-wordmark"] {
+  filter: none;
+  mix-blend-mode: normal;
 }
 
 .home-page .home-clients .client-wordmark {
