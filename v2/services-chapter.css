@@ -4,6 +4,10 @@
 .service-chapter-stage{height:clamp(610px,75svh,940px);position:relative;overflow:hidden;background:#101010;color:#fff}
 .service-chapter-visual{position:absolute;inset:0;background-image:linear-gradient(180deg,rgba(0,0,0,.06) 24%,rgba(0,0,0,.72)),var(--service-photo);background-size:cover;background-position:center;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(32px,5vw,82px);opacity:0;visibility:hidden;transition:opacity .45s ease,visibility .45s}
 .service-chapter-visual.is-active{opacity:1;visibility:visible}
+.service-chapter-rotation{position:absolute;z-index:3;top:clamp(20px,3vw,44px);right:clamp(20px,3vw,44px);display:grid;place-items:center;width:44px;height:44px;padding:10px;border:1px solid #fff5;border-radius:8px;background:#1118;color:#fff;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer}
+.service-chapter-rotation[hidden]{display:none}
+.service-chapter-rotation svg{width:22px;height:22px;fill:currentColor}
+.service-chapter-rotation:focus-visible{outline:2px solid #fff;outline-offset:4px}
 .home-page .service-chapter-eyebrow{position:absolute;z-index:2;top:clamp(32px,5vw,82px);left:clamp(32px,5vw,82px);margin:0;color:#fff;font:700 11px/1.3 Arial,Helvetica,sans-serif;letter-spacing:.17em;text-transform:uppercase}
 .home-page .service-chapter-title{font:400 clamp(90px,11vw,190px)/.78 'TDG Chapter','League Gothic',Impact,sans-serif;color:#fff;text-transform:uppercase;max-width:1000px;margin:0;text-shadow:0 2px 24px #0005;text-wrap:balance}
 .service-chapter-choices{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));min-height:155px;background:#101010}
