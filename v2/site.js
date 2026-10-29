@@ -12,6 +12,36 @@
   document.querySelectorAll('[data-home-link]').forEach(a=>a.addEventListener('click',()=>{try{sessionStorage.setItem(homePath+':return','logo');}catch{}}));
   const projectChapter=document.querySelector('.home-project');
   const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+  const introduction=document.querySelector('.home-introduction');
+  if(introduction){
+    const heading=introduction.querySelector('h2'),paragraph=introduction.querySelector('.section-intro');
+    if(heading&&paragraph){
+      let frame=0,geometry=[];
+      function paintIntroduction(){
+        frame=0;
+        if(reducedMotion.matches){heading.style.transform='';paragraph.style.transform='';return;}
+        const top=introduction.getBoundingClientRect().top;
+        for(const {element,travel,offset} of geometry){
+          const progress=Math.max(0,Math.min(1,(innerHeight*.96-top-offset)/(innerHeight*.62)));
+          const remaining=Math.pow(1-progress,3);
+          element.style.transform=`translate3d(${(travel*remaining).toFixed(2)}px,0,0)`;
+        }
+      }
+      function measureIntroduction(){
+        heading.style.transform='';paragraph.style.transform='';
+        const parent=introduction.getBoundingClientRect(),left=heading.getBoundingClientRect(),right=paragraph.getBoundingClientRect();
+        geometry=[{element:heading,travel:-left.right-24,offset:left.top-parent.top},{element:paragraph,travel:innerWidth-right.left+24,offset:right.top-parent.top}];
+        paintIntroduction();
+      }
+      function scheduleIntroduction(){if(!frame)frame=requestAnimationFrame(paintIntroduction);}
+      addEventListener('scroll',scheduleIntroduction,{passive:true});
+      addEventListener('resize',measureIntroduction);
+      reducedMotion.addEventListener('change',measureIntroduction);
+      document.fonts.ready.then(measureIntroduction);
+      addEventListener('beforeprint',()=>{if(frame)cancelAnimationFrame(frame);geometry=[];heading.style.transform='';paragraph.style.transform='';},{once:true});
+      measureIntroduction();
+    }
+  }
   if(projectChapter&&'IntersectionObserver' in window&&!reducedMotion.matches){
     const pieces=[...projectChapter.querySelectorAll('.section-head h2,.section-head a,.section-intro,.featured-copy,.featured-visual')];
     const reveal=element=>element.classList.remove('is-pending');

@@ -3,6 +3,7 @@
 
 .home-page .home-content {
   --home-space: clamp(56px, 6vw, 88px);
+  overflow-x: clip;
 }
 
 .home-page .home-content > .content-section {
