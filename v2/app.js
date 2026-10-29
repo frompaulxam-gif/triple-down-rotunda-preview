@@ -7,6 +7,12 @@
   const homeKey=location.pathname.replace(/\/?$/,'/')+':gallery';
   let restored=null;
   try{restored=JSON.parse(sessionStorage.getItem(homeKey)||'null');if(performance.getEntriesByType('navigation')[0]?.type==='reload')restored=null;}catch{}
+  // Shared preview entries begin with the opening, including older gallery links.
+  if(!location.hash||location.hash==='#work-showcase'){
+    restored=null;
+    if(location.hash)history.replaceState(history.state,'',location.pathname+location.search);
+    history.scrollRestoration='manual';scrollTo(0,0);
+  }
   let paused=Boolean(restored?.paused),galleryVisible=true,announcePending=false,sceneIntroOffset=0,returningFromHistory=false;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const count = projects.length, slots = count * 2, step = 360 / slots;
@@ -25,6 +31,24 @@
   if(intro)document.body.classList.add('in-intro');
   let drag = null, dragged = false, snapTimer = 0, returnFocus = null, currentProject = 0;
   let lastInteract=-Infinity, keyboardMode=false, lockupAnimations=[], introTimer=0, lastVisualRotation=null;
+  let openingLocked=false,openingUnlockTimer=0;
+  function unlockOpening(){
+    openingLocked=false;clearTimeout(openingUnlockTimer);
+    document.documentElement.classList.remove('intro-scroll-locked');document.body.classList.remove('intro-scroll-locked');
+  }
+  function lockOpening(duration=2500){
+    clearTimeout(openingUnlockTimer);scrollTo(0,0);openingLocked=true;
+    document.documentElement.classList.add('intro-scroll-locked');document.body.classList.add('intro-scroll-locked');
+    openingUnlockTimer=setTimeout(unlockOpening,duration);
+  }
+  const guardOpeningScroll=event=>{if(openingLocked&&!event.ctrlKey){event.preventDefault();event.stopImmediatePropagation();}};
+  window.addEventListener('wheel',guardOpeningScroll,{capture:true,passive:false});
+  window.addEventListener('touchmove',guardOpeningScroll,{capture:true,passive:false});
+  window.addEventListener('keydown',event=>{if(openingLocked&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','PageUp','PageDown','Home','End',' '].includes(event.key)){event.preventDefault();event.stopImmediatePropagation();}},{capture:true});
+  window.addEventListener('pagehide',unlockOpening);
+  // Cover font loading too; brandIntro restarts the 2.5s timer on its first frame.
+  // This initial timeout also releases scrolling if initialisation fails.
+  if(intro)lockOpening(4000);
   const escape = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const mod = (n,m) => ((n%m)+m)%m;
   const logo = (p,cls='brand-logo') => p.logo ? `<img class="client-logo ${cls}" data-brand="${p.slug}" src="${p.logo}" alt="${escape(p.title)}">` : `<span class="plain-wordmark">${escape(p.title)}</span>`;
@@ -32,7 +56,7 @@
   const reel=$('#logo-reel'),cross=$('.intro-cross'),photoBlurNode=$('#card-directional-blur');
   let lastBlurValue='',lastBlurEnabled=null;
   let reelSlot=100,lastReelIndex=null,initialised=false;
-  function finishLockup(){document.body.classList.remove('in-intro');$('#intro-lockup').hidden=true;saveGallery();}
+  function finishLockup(){unlockOpening();document.body.classList.remove('in-intro');$('#intro-lockup').hidden=true;saveGallery();}
   function saveGallery(){try{sessionStorage.setItem(homeKey,JSON.stringify({angle:lastVisualRotation??angle,paused,scroll:scrollY,seen:true}));}catch{}}
   function cancelIntro(){clearTimeout(introTimer);lockupAnimations.forEach(a=>a.cancel());finishLockup();}
   function introMotion(elapsed){
@@ -80,6 +104,7 @@
   }
   function brandIntro(){
     if(!intro||reduced.matches){finishLockup();return;}
+    lockOpening();
     document.body.classList.add('in-intro');
     const mobile=innerWidth<701,at=ms=>ms/introDuration;
     sceneIntroOffset=Math.min(0,innerHeight*.52-scene.getBoundingClientRect().top);
@@ -222,7 +247,7 @@
     if(intro||(!paused&&!reduced.matches&&!dialog.open&&!index.open)||drag||Math.abs(target-angle)>.005)wake();
   }
   function wake(){if(initialised&&!raf&&galleryVisible&&!document.hidden)raf=requestAnimationFrame(draw);}
-  function stopIntro(){lastInteract=performance.now();if(intro){intro=false;angle=target=lastVisualRotation??angle;cancelIntro();lastVisualRotation=null;}}
+  function stopIntro(){if(openingLocked)return;lastInteract=performance.now();if(intro){intro=false;angle=target=lastVisualRotation??angle;cancelIntro();lastVisualRotation=null;}}
   document.addEventListener('focusin',e=>{if(intro&&e.target.closest('.header,.hero-title,.gallery-status,.work-showcase'))stopIntro();});
   addEventListener('scroll',()=>{if(intro&&stage.getBoundingClientRect().bottom<innerHeight*.75)stopIntro();},{passive:true});
   $('.scroll-hint')?.addEventListener('click',stopIntro);

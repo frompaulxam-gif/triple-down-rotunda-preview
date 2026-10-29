@@ -24,6 +24,9 @@ body.agency-site {
   line-height: 1.65;
 }
 
+html.intro-scroll-locked { overflow: hidden; overscroll-behavior: none; }
+body.agency-site.intro-scroll-locked { position: fixed; top: 0; left: 0; right: 0; height: 100%; overflow: hidden; touch-action: none; }
+
 .agency-site :where(main, footer) {
   overflow-wrap: break-word;
 }
