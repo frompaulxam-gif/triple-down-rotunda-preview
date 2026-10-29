@@ -1,0 +1,24 @@
+/* Services treatment reused from the earlier Triple Down variant D. */
+@font-face{font-family:'TDG Chapter';src:url('services-assets/league-gothic.woff2') format('woff2');font-display:swap}
+.home-page .service-chapter{width:100%;max-width:none;margin:clamp(40px,5vw,72px) 0 0;background:#fff;color:#171717;scroll-margin-top:var(--site-header-height)}
+.service-chapter-stage{height:clamp(610px,75svh,940px);position:relative;overflow:hidden;background:#101010;color:#fff}
+.service-chapter-visual{position:absolute;inset:0;background-image:linear-gradient(180deg,rgba(0,0,0,.06) 24%,rgba(0,0,0,.72)),var(--service-photo);background-size:cover;background-position:center;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(32px,5vw,82px);opacity:0;visibility:hidden;transition:opacity .45s ease,visibility .45s}
+.service-chapter-visual.is-active{opacity:1;visibility:visible}
+.home-page .service-chapter-eyebrow{position:absolute;z-index:2;top:clamp(32px,5vw,82px);left:clamp(32px,5vw,82px);margin:0;color:#fff;font:700 11px/1.3 Arial,Helvetica,sans-serif;letter-spacing:.17em;text-transform:uppercase}
+.home-page .service-chapter-title{font:400 clamp(90px,11vw,190px)/.78 'TDG Chapter','League Gothic',Impact,sans-serif;color:#fff;text-transform:uppercase;max-width:1000px;margin:0;text-shadow:0 2px 24px #0005;text-wrap:balance}
+.service-chapter-choices{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));min-height:155px;background:#101010}
+.service-chapter-choices[hidden]{display:none}
+.service-chapter-choice{scroll-margin-top:calc(var(--site-header-height) + 8px);scroll-margin-bottom:8px;border:0;border-right:1px solid #59524b;border-top:1px solid #59524b;border-radius:0;background:#101010;color:#c4c0ba;text-align:left;padding:20px clamp(12px,1.5vw,26px);cursor:pointer;font:400 clamp(28px,2.5vw,44px)/.9 'TDG Chapter','League Gothic',Impact,sans-serif;text-transform:uppercase;transition:background .2s,color .2s}
+.service-chapter-choice:last-child{border-right:0}
+.service-chapter-choice:hover,.service-chapter-choice.is-active{background:#e9e4d9;color:#111}
+.service-chapter-choice:focus-visible{outline:2px solid currentColor;outline-offset:-3px}
+.service-chapter-information{width:calc(100% - var(--site-gutter)*2);max-width:1200px;margin:0 auto;padding:36px 0 20px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,6vw,88px)}
+.service-chapter-intro{max-width:52ch;margin:0;font-size:17px;line-height:1.65}
+.service-chapter-detail{margin:0 0 25px}
+.service-chapter-detail h3{font:500 24px/1.2 Archivo,Arial,sans-serif;margin:0 0 16px}
+.service-chapter.is-enhanced .service-chapter-detail h3{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.service-chapter-detail[hidden]{display:none}
+.service-chapter-detail p{max-width:49ch;margin:0 0 10px;font-size:16px;line-height:1.65}
+@media(max-width:900px){.home-page .service-chapter-title{font-size:clamp(75px,12vw,130px)}.service-chapter-choice{font-size:clamp(25px,3vw,32px)}}
+@media(max-width:600px){.service-chapter-stage{height:min(78svh,720px);min-height:520px}.service-chapter-visual{padding:25px 20px 34px}.home-page .service-chapter-eyebrow{top:25px;left:20px}.home-page .service-chapter-title{font-size:clamp(70px,19vw,110px)}.service-chapter-choices{display:block;min-height:0}.service-chapter-choice{width:100%;display:block;border-right:0;min-height:68px;padding:12px 22px;font-size:31px}.service-chapter-information{grid-template-columns:minmax(0,1fr);gap:24px;padding-top:28px}.service-chapter-intro{font-size:16px}}
+@media(prefers-reduced-motion:reduce){.service-chapter-visual,.service-chapter-choice{transition:none!important}}

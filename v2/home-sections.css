@@ -196,127 +196,6 @@
   line-height: 1.55;
 }
 
-/* One photograph gives the five service areas a shared visual counterpart. */
-.home-page .home-services > .section-intro {
-  max-width: 66ch;
-}
-
-.home-page .home-services-layout {
-  display: grid;
-  grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
-  align-items: start;
-  gap: clamp(36px, 6vw, 88px);
-  margin: 46px 0 20px;
-}
-
-.home-page .service-scene {
-  position: sticky;
-  top: calc(var(--site-header-height) + 28px);
-  min-width: 0;
-  aspect-ratio: 4 / 5;
-  border-radius: 20px;
-  overflow: hidden;
-  transform: rotate(-1.5deg);
-  background: var(--white);
-}
-
-.home-page .service-scene .home-service-photo {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 450ms cubic-bezier(.22, 1, .36, 1);
-}
-
-.home-page .service-scene .home-service-photo:first-child {
-  opacity: 1;
-}
-
-.home-page .home-service-list {
-  min-width: 0;
-}
-
-.home-page .home-service {
-  border-top: 1px solid var(--line);
-}
-
-.home-page .home-service:last-child {
-  border-bottom: 1px solid var(--line);
-}
-
-.home-page .home-service summary {
-  display: flex;
-  min-height: 94px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding-block: 23px;
-  list-style: none;
-  cursor: pointer;
-}
-
-.home-page .home-service summary::-webkit-details-marker {
-  display: none;
-}
-
-.home-page .home-service summary::after {
-  content: "+";
-  flex: 0 0 20px;
-  font-family: Archivo, Arial, sans-serif;
-  font-size: 26px;
-  font-weight: 300;
-  line-height: 1;
-  text-align: center;
-}
-
-.home-page .home-service[open] summary::after {
-  content: "−";
-}
-
-.home-page .home-service summary h3 {
-  max-width: 20ch;
-  margin: 0;
-  font-family: Archivo, Arial, sans-serif;
-  font-size: clamp(23px, 2.5vw, 33px);
-  font-style: normal;
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: -.03em;
-}
-
-.home-page .home-service > div {
-  max-width: 49ch;
-  padding: 0 40px 27px 0;
-}
-
-.home-page .home-service > div p {
-  margin: 0 0 13px;
-  font-size: 16px;
-  line-height: 1.65;
-}
-
-.home-page .home-services > .text-link {
-  margin-top: 14px;
-}
-
-@supports selector(:has(*)) {
-  .home-page .home-services:has(.home-service[open]) .home-service-photo {
-    opacity: 0;
-  }
-
-  .home-page .home-services:has(.home-service[data-service="0"][open]) .home-service-photo[data-service="0"],
-  .home-page .home-services:has(.home-service[data-service="1"][open]) .home-service-photo[data-service="1"],
-  .home-page .home-services:has(.home-service[data-service="2"][open]) .home-service-photo[data-service="2"],
-  .home-page .home-services:has(.home-service[data-service="3"][open]) .home-service-photo[data-service="3"],
-  .home-page .home-services:has(.home-service[data-service="4"][open]) .home-service-photo[data-service="4"] {
-    opacity: 1;
-  }
-}
-
 /* A room-scale image interrupts the service list and grounds the agency copy. */
 .home-page .home-content > .content-section.home-experience {
   display: grid;
@@ -453,7 +332,6 @@
   }
 
   .home-page .home-project .home-featured,
-  .home-page .home-services-layout,
   .home-page .home-content > .content-section.home-experience {
     gap: 38px;
   }
@@ -496,8 +374,7 @@
   .home-page .home-content .home-introduction,
   .home-page .home-content > .content-section.home-process,
   .home-page .home-content > .content-section.home-experience,
-  .home-page .home-project .home-featured,
-  .home-page .home-services-layout {
+  .home-page .home-project .home-featured {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -602,38 +479,6 @@
     font-size: 16px;
   }
 
-  .home-page .home-services-layout {
-    gap: 28px;
-    margin-top: 30px;
-  }
-
-  .home-page .service-scene {
-    position: relative;
-    top: auto;
-    width: calc(100% - 12px);
-    margin-inline: auto;
-    aspect-ratio: 5 / 4;
-    border-radius: 15px;
-    transform: rotate(-1.5deg);
-  }
-
-  .home-page .home-service summary {
-    min-height: 82px;
-    gap: 17px;
-    padding-block: 21px;
-  }
-
-  .home-page .home-service summary h3 {
-    max-width: 21ch;
-    font-size: clamp(23px, 6vw, 28px);
-    letter-spacing: -.025em;
-  }
-
-  .home-page .home-service > div {
-    padding-right: 8px;
-    padding-bottom: 25px;
-  }
-
   .home-page .home-content > .content-section.home-experience {
     gap: 32px;
     padding-top: 54px;
@@ -713,8 +558,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .home-page .home-content .featured-visual .proof-image,
-  .home-page .home-content .featured-phone,
-  .home-page .home-content .home-service-photo {
+  .home-page .home-content .featured-phone {
     transition: none;
   }
 
