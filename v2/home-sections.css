@@ -72,24 +72,84 @@
   line-height: 1.55;
 }
 
-/* Current clients are a compact proof band, distinct from the work sequence. */
+/* Two equal groups carry the clients across, as in the Ventura ticker. */
 .home-page .home-content .home-clients {
   padding-bottom: clamp(48px, 5vw, 76px);
 }
 
-.home-page .home-clients .section-head h2 {
+.home-page .home-clients-heading {
+  text-align: center;
+}
+
+.home-page .home-clients-heading h2 {
+  margin: 0 auto 20px;
   font-size: clamp(36px, 3.8vw, 52px);
 }
 
 .home-page .home-clients .section-intro {
   max-width: 49ch;
+  margin-inline: auto;
   font-size: 17px;
 }
 
-.home-page .home-clients .clients-grid {
+.home-page .home-clients-heading .text-link {
+  margin-top: 16px;
+}
+
+.home-page .home-clients .clients-marquee {
+  position: relative;
+  width: 100%;
+  margin-top: 32px;
+  overflow: hidden;
+}
+
+.home-page .clients-marquee::before,
+.home-page .clients-marquee::after {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  width: clamp(24px, 5vw, 72px);
+  content: "";
+  pointer-events: none;
+}
+
+.home-page .clients-marquee::before {
+  left: 0;
+  background: linear-gradient(to right, #fff, #fff0);
+}
+
+.home-page .clients-marquee::after {
+  right: 0;
+  background: linear-gradient(to left, #fff, #fff0);
+}
+
+.home-page .clients-marquee:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 6px;
+}
+
+.home-page .clients-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: clients-drift 42s linear infinite;
+}
+
+.home-page .clients-marquee:is(:hover, :focus-within) .clients-marquee-track {
+  animation-play-state: paused;
+}
+
+.home-page .home-clients .clients-marquee-group {
+  display: grid;
+  width: max(100vw, 1000px);
+  flex-shrink: 0;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: clamp(18px, 3vw, 44px);
-  margin-block: 30px 0;
+  gap: 0;
+  margin: 0;
+}
+
+@keyframes clients-drift {
+  to { transform: translateX(-50%); }
 }
 
 .home-page .home-clients .client-item {
@@ -393,7 +453,7 @@
     font-size: 18px;
   }
 
-  .home-page .home-clients .section-head h2 {
+  .home-page .home-clients-heading h2 {
     font-size: clamp(36px, 9vw, 46px);
   }
 
@@ -402,26 +462,14 @@
     font-size: 16px;
   }
 
-  .home-page .home-clients .clients-grid {
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: clamp(132px, 35vw, 176px);
-    align-items: center;
-    gap: 18px;
-    margin-top: 22px;
-    padding: 0 0 14px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: thin;
-    scrollbar-color: var(--line) transparent;
-    scroll-snap-type: x proximity;
+  .home-page .home-clients .clients-marquee {
+    margin-top: 24px;
   }
 
   .home-page .home-clients .client-item {
     min-height: 108px;
     gap: 14px;
     padding-block: 10px;
-    scroll-snap-align: start;
   }
 
   .home-page .home-clients .client-item img {
@@ -562,8 +610,34 @@
     transition: none;
   }
 
-  .home-page .home-content .clients-grid {
-    scroll-behavior: auto;
-    scroll-snap-type: none;
+  .home-page .home-clients .clients-marquee {
+    overflow: visible;
+  }
+
+  .home-page .clients-marquee::before,
+  .home-page .clients-marquee::after,
+  .home-page .clients-marquee-group[aria-hidden] {
+    display: none;
+  }
+
+  .home-page .clients-marquee-track {
+    width: 100%;
+    animation: none;
+    transform: none;
+  }
+
+  .home-page .home-clients .clients-marquee-group {
+    width: 100%;
+    gap: 16px 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) and (max-width: 700px) {
+  .home-page .home-clients .clients-marquee-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-page .home-clients .client-item:last-child {
+    grid-column: 1 / -1;
   }
 }
