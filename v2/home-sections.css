@@ -361,8 +361,8 @@
   max-width: 17ch;
   margin: 0 0 24px;
   font-size: clamp(52px, 7vw, 90px);
-  font-family: TDSerif, Georgia, serif;
-  font-style: italic;
+  font-family: 'Bespoke Serif', Georgia, serif;
+  font-style: normal;
   font-weight: 400;
   line-height: 1.03;
   letter-spacing: -.035em;

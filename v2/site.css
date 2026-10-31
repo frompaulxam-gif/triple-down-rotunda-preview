@@ -2,8 +2,8 @@
    card transforms and introduction. All new layout stays in document flow. */
 
 @font-face {
-  font-family: TDBebas;
-  src: url(brand-assets/bebas-neue.woff2) format('woff2');
+  font-family: Tanker;
+  src: url(brand-assets/Tanker-Regular.woff2) format('woff2');
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -116,7 +116,7 @@ body.agency-site.intro-scroll-locked { position: fixed; top: 0; left: 0; right: 
 
 .agency-site .logo-type,
 .agency-site .intro-name {
-  font-family: TDBebas, 'Arial Narrow', Arial, sans-serif;
+  font-family: Tanker, 'Arial Narrow', Arial, sans-serif;
   font-size: 36px;
   font-style: normal;
   font-weight: 400;
@@ -297,9 +297,9 @@ body.agency-site.intro-scroll-locked { position: fixed; top: 0; left: 0; right: 
   min-height: 48px;
   align-items: center;
   max-width: 100%;
-  font-family: TDSerif, Georgia, serif;
+  font-family: 'Bespoke Serif', Georgia, serif;
   font-size: clamp(32px, 6vw, 52px);
-  font-style: italic;
+  font-style: normal;
   line-height: 1.16;
   letter-spacing: -.025em;
   transform-origin: left center;
@@ -380,9 +380,9 @@ body.agency-site.intro-scroll-locked { position: fixed; top: 0; left: 0; right: 
   max-width: none;
   margin: 0 auto 27px;
   padding: 0;
-  font-family: TDSerif, Georgia, serif;
+  font-family: 'Bespoke Serif', Georgia, serif;
   font-size: clamp(48px, 6.2vw, 84px);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   line-height: 1.03;
   letter-spacing: -.035em;
@@ -539,9 +539,9 @@ body.agency-site.intro-scroll-locked { position: fixed; top: 0; left: 0; right: 
 .section-head h2 {
   max-width: 23ch;
   margin: 0 0 26px;
-  font-family: TDSerif, Georgia, serif;
+  font-family: 'Bespoke Serif', Georgia, serif;
   font-size: clamp(39px, 4.6vw, 62px);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   line-height: 1.08;
   letter-spacing: -.025em;
@@ -713,9 +713,9 @@ body.agency-site.intro-scroll-locked { position: fixed; top: 0; left: 0; right: 
 
 .featured-copy h3 {
   margin: 0 0 24px;
-  font-family: TDSerif, Georgia, serif;
+  font-family: 'Bespoke Serif', Georgia, serif;
   font-size: clamp(34px, 3.4vw, 48px);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   line-height: 1.1;
   letter-spacing: -.025em;
@@ -752,9 +752,9 @@ body.agency-site.intro-scroll-locked { position: fixed; top: 0; left: 0; right: 
 .page-hero h1 {
   max-width: 21ch;
   margin: 0 0 30px;
-  font-family: TDSerif, Georgia, serif;
+  font-family: 'Bespoke Serif', Georgia, serif;
   font-size: clamp(48px, 6.5vw, 88px);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   line-height: 1.04;
   letter-spacing: -.035em;
@@ -791,9 +791,9 @@ body.agency-site.intro-scroll-locked { position: fixed; top: 0; left: 0; right: 
 
 .page-body h2 {
   margin: 64px 0 24px;
-  font-family: TDSerif, Georgia, serif;
+  font-family: 'Bespoke Serif', Georgia, serif;
   font-size: clamp(33px, 3.3vw, 45px);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   line-height: 1.12;
   letter-spacing: -.025em;
@@ -1211,9 +1211,9 @@ body.agency-site.intro-scroll-locked { position: fixed; top: 0; left: 0; right: 
 .footer-top h2 {
   max-width: 18ch;
   margin: 0 0 27px;
-  font-family: TDSerif, Georgia, serif;
+  font-family: 'Bespoke Serif', Georgia, serif;
   font-size: clamp(40px, 4.5vw, 60px);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   line-height: 1.08;
   letter-spacing: -.025em;
@@ -1723,3 +1723,17 @@ body.agency-site.intro-scroll-locked { position: fixed; top: 0; left: 0; right: 
  .project-dialog .close-project .back-label-full{display:none}
  .project-dialog .close-project .back-label-short{display:inline}
 }
+
+/* Supplied Fontshare Regular faces: no synthetic italic or bold.
+   Body and interface copy retain Archivo; client marks retain original artwork. */
+.agency-site :is(h1,h2,h3):not(.eyebrow):not(.service-chapter-eyebrow),
+.agency-site .mobile-menu nav a,
+.agency-site .index-heading h2,
+.agency-site .project-bottom button {
+  font-family: 'Bespoke Serif', Georgia, serif;
+  font-style: normal;
+  font-weight: 400;
+  font-synthesis: none;
+}
+.agency-site :is(h1,h2,h3) em { font-family: inherit; font-style: normal; }
+.agency-site :is(.logo-type,.intro-name) { font-synthesis: none; }
