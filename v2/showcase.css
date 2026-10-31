@@ -89,5 +89,6 @@
 .is-work-active .dimension-viewport{touch-action:pinch-zoom}
 @media(prefers-reduced-motion:reduce){.dimension-signal{display:none}.dimension-card::after{display:none}}
 .dimension-index{top:var(--index-top,calc(var(--site-header-height,96px) + 8px));max-height:max(60px,calc(var(--category-top,44vh) - var(--index-top,114px) - 24px));overflow-y:auto;scrollbar-width:none}
+.dimension-index{touch-action:pan-y;overscroll-behavior:contain}
 .dimension-index::-webkit-scrollbar{display:none}
 .dimension-index img,.dimension-index .dimension-wordmark{transform:scale(.72);transform-origin:right center}

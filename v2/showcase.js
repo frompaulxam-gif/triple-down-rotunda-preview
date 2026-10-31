@@ -6,7 +6,9 @@
   const cases=JSON.parse(section.querySelector('.dimension-data').textContent),count=cases.length;
   const $=selector=>section.querySelector(selector),mod=(n,m)=>((n%m)+m)%m,clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const experience=$('.dimension-viewport'),gallery=$('.dimension-gallery'),track=$('.dimension-track'),thread=$('.dimension-thread');
-  const caption=$('.dimension-caption'),category=$('.dimension-category'),indexButtons=[...section.querySelectorAll('[data-dimension-jump]')];
+  const caption=$('.dimension-caption'),category=$('.dimension-category'),index=$('.dimension-index'),indexButtons=[...section.querySelectorAll('[data-dimension-jump]')];
+  // Keep the native index scroller outside the drag surface's touch-action scope.
+  section.append(index);
   const reduced=matchMedia('(prefers-reduced-motion: reduce)'),cards=[],svgNS='http://www.w3.org/2000/svg';
   const signal=document.createElementNS(svgNS,'g'),tail=document.createElementNS(svgNS,'path'),signalLogo=document.createElementNS(svgNS,'image');
   signal.classList.add('dimension-signal');tail.classList.add('dimension-signal-tail');signalLogo.classList.add('dimension-signal-logo');
@@ -40,7 +42,7 @@
     section.classList.toggle('gallery-stacked',stacked);section.classList.toggle('gallery-compact',compact);
     const headerHeight=document.querySelector('.site-header').getBoundingClientRect().height;
     const edge=mobile?22:width*.045,topSafe=headerHeight+12,controlsBottom=mobile?(height<=700?12:22):24,contentBottom=height-controlsBottom-60;
-    const set=(key,value)=>experience.style.setProperty(key,value);let captionWidth,captionTop;
+    const set=(key,value)=>section.style.setProperty(key,value);let captionWidth,captionTop;
     set('--index-top',(headerHeight+8)+'px');
     if(stacked){
       captionWidth=width-edge*2;set('--caption-width',captionWidth+'px');set('--caption-left',edge+'px');
@@ -52,7 +54,8 @@
       set('--rail-top',topSafe+'px');set('--rail-bottom',railBottom+'px');
     }else{
       cardW=Math.min(460,width*.4,Math.max(90,contentBottom-topSafe)*460/300);cardH=cardW*300/460;
-      centerY=clamp(height*.44,topSafe+cardH/2,contentBottom-cardH/2);
+      const preferredCenter=height>=650?Math.max(height*.44,topSafe+cardH*.95+50):height*.44;
+      centerY=clamp(preferredCenter,topSafe+cardH/2,contentBottom-cardH/2);
       captionWidth=Math.min(300,Math.max(120,(width-cardW-cardH*.14)/2-edge-18));set('--caption-width',captionWidth+'px');set('--caption-left',edge+'px');
       const captionHeight=caption.getBoundingClientRect().height;captionTop=clamp(centerY-captionHeight/2,topSafe,contentBottom-captionHeight);pitch=cardH*1.45;
     }
@@ -134,6 +137,7 @@
   function exit(direction){stop();leaving=direction;const destination=direction>0?document.querySelector('#introduction'):document.querySelector('.gallery-stage');if(destination){destination.tabIndex=-1;destination.focus({preventScroll:true});destination.scrollIntoView({block:'start',behavior:reduced.matches?'instant':'smooth'});}}
   section.addEventListener('wheel',event=>{
     if(document.querySelector('dialog[open]')||event.ctrlKey)return;
+    if(index.contains(event.target)&&index.scrollHeight>index.clientHeight+1)return;
     let delta=Math.abs(event.deltaX)>Math.abs(event.deltaY)?event.deltaX:event.deltaY;if(event.deltaMode===1)delta*=16;if(event.deltaMode===2)delta*=height;
     const rect=section.getBoundingClientRect(),direction=Math.sign(delta);if(leaving&&Math.abs(delta)>=2&&direction!==leaving)leaving=0;
     if(!aligned()){if(leaving)return;if(Math.abs(rect.top)<=48)align();else if((rect.top>0&&rect.top<innerHeight*.55&&delta>0)||(rect.top<0&&rect.top>-innerHeight*.55&&delta<0)){event.preventDefault();align();}else return;}
