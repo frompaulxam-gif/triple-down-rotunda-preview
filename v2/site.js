@@ -8,56 +8,12 @@
   menu?.addEventListener('close',()=>{toggle.setAttribute('aria-expanded','false');toggle.focus({preventScroll:true});});
   menu?.addEventListener('click',e=>{if(e.target===menu){const r=menu.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeMenu();}});
   menu?.querySelectorAll('a').forEach(a=>a.addEventListener('click',closeMenu));
-  const homePath=new URL(config.home||'./',location.href).pathname;
-  document.querySelectorAll('[data-home-link]').forEach(a=>a.addEventListener('click',()=>{try{sessionStorage.setItem(homePath+':return','logo');}catch{}}));
-  const projectChapter=document.querySelector('.home-project');
-  const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
-  const introduction=document.querySelector('.home-introduction');
-  if(introduction){
-    const heading=introduction.querySelector('h2'),paragraph=introduction.querySelector('.section-intro');
-    if(heading&&paragraph){
-      let frame=0,geometry=[];
-      function paintIntroduction(){
-        frame=0;
-        if(reducedMotion.matches){heading.style.transform='';paragraph.style.transform='';return;}
-        const top=introduction.getBoundingClientRect().top;
-        for(const {element,travel,offset} of geometry){
-          const progress=Math.max(0,Math.min(1,(innerHeight*.96-top-offset)/(innerHeight*.62)));
-          const remaining=Math.pow(1-progress,3);
-          element.style.transform=`translate3d(${(travel*remaining).toFixed(2)}px,0,0)`;
-        }
-      }
-      function measureIntroduction(){
-        heading.style.transform='';paragraph.style.transform='';
-        const parent=introduction.getBoundingClientRect(),left=heading.getBoundingClientRect(),right=paragraph.getBoundingClientRect();
-        geometry=[{element:heading,travel:-left.right-24,offset:left.top-parent.top},{element:paragraph,travel:innerWidth-right.left+24,offset:right.top-parent.top}];
-        paintIntroduction();
-      }
-      function scheduleIntroduction(){if(!frame)frame=requestAnimationFrame(paintIntroduction);}
-      addEventListener('scroll',scheduleIntroduction,{passive:true});
-      addEventListener('resize',measureIntroduction);
-      reducedMotion.addEventListener('change',measureIntroduction);
-      document.fonts.ready.then(measureIntroduction);
-      addEventListener('beforeprint',()=>{if(frame)cancelAnimationFrame(frame);geometry=[];heading.style.transform='';paragraph.style.transform='';},{once:true});
-      measureIntroduction();
-    }
-  }
-  if(projectChapter&&'IntersectionObserver' in window&&!reducedMotion.matches){
-    const pieces=[...projectChapter.querySelectorAll('.section-head h2,.section-head a,.section-intro,.featured-copy,.featured-visual')];
-    const reveal=element=>element.classList.remove('is-pending');
-    const observer=new IntersectionObserver(entries=>{
-      entries.forEach(entry=>{if(entry.isIntersecting){reveal(entry.target);observer.unobserve(entry.target);}});
-    },{rootMargin:'0px 0px -6% 0px',threshold:0});
-    pieces.forEach((element,index)=>{
-      element.classList.add('project-reveal');
-      element.style.setProperty('--project-reveal-delay',`${index<3?index*70:80}ms`);
-      if(element.getBoundingClientRect().top>=innerHeight*.94){element.classList.add('is-pending');observer.observe(element);}
-    });
-    const revealAll=()=>{pieces.forEach(reveal);observer.disconnect();};
-    reducedMotion.addEventListener('change',event=>{if(event.matches)revealAll();});
-    projectChapter.addEventListener('focusin',event=>{pieces.forEach(element=>{if(element.contains(event.target))reveal(element);});});
-    addEventListener('beforeprint',revealAll,{once:true});
-  }
+  document.querySelectorAll('.signup').forEach(form=>form.addEventListener('submit',event=>{
+    event.preventDefault();
+    const data=new FormData(form);
+    const body='Please subscribe me to Notes from the room.\n\nName: '+data.get('name')+'\nEmail: '+data.get('email');
+    location.href='mailto:'+config.email+'?subject=Notes%20from%20the%20room&body='+encodeURIComponent(body);
+  }));
   const form=document.querySelector('.enquiry-form');
   if(form){
     const errors=document.querySelector('#form-errors'),status=form.querySelector('.form-status'),button=form.querySelector('button[type="submit"]');
@@ -90,15 +46,25 @@
       status.textContent='';const data=new FormData(form),fields={};const name=String(data.get('name')||'').trim(),email=String(data.get('email')||'').trim(),message=String(data.get('message')||'').trim();
       if(!name)fields.name='Please enter your name.';
       if(!email)fields.email='Please enter your email address.';else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))fields.email='Please check your email address.';
+      for(const [key,label] of [['business','business or venue name'],['businessType','type of business'],['stage','business stage']]) {
+        if(!String(data.get(key)||'').trim())fields[key]='Please enter your '+label+'.';
+      }
       if(!message)fields.message='Please tell us a little about the project.';
       if(Object.keys(fields).length){showErrors(fields);return;}
-      if(!endpoint){showErrors({},`Online form delivery is not connected. Please email ${config.email}.`);return;}
+      if(!endpoint){
+        errors.hidden=true;
+        form.querySelectorAll('[aria-invalid]').forEach(el=>el.removeAttribute('aria-invalid'));
+        form.querySelectorAll('.field-error').forEach(el=>el.textContent='');
+        const body=Array.from(data.entries()).filter(([key,value])=>key!=='website_confirm' && value).map(([key,value])=>key+': '+value).join('\n');
+        location.href='mailto:'+config.email+'?subject=Triple%20Down%20enquiry&body='+encodeURIComponent(body);
+        status.textContent='Finish sending your enquiry in your email app.';return;
+      }
       busy=true;button.disabled=true;button.textContent='Sending...';errors.hidden=true;
       let attempted=false,uncertain=false,attemptId='';
       try{
         await fetchNonce();
         attemptId=String(nonce).split('.')[1]||'';
-        const payload={name,email,message,business:String(data.get('business')||'').trim(),profile:String(data.get('profile')||'').trim(),services:data.getAll('services'),timing:String(data.get('timing')||'').trim(),budget:String(data.get('budget')||'').trim(),website:String(data.get('website_confirm')||''),nonce};
+        const payload={formVersion:2,name,email,message,phone:data.get('phone')||'',businessType:data.get('businessType'),stage:data.get('stage'),business:String(data.get('business')||'').trim(),profile:String(data.get('profile')||'').trim(),services:data.getAll('services'),timing:String(data.get('timing')||'').trim(),budget:String(data.get('budget')||'').trim(),website:String(data.get('website_confirm')||''),nonce};
         attempted=true;
         const {response,result}=await requestJson(new URL('/enquiry',endpoint),{method:'POST',headers:{'Content-Type':'application/json'},credentials:'omit',body:JSON.stringify(payload)},30000);
         if(!response.ok||result?.ok!==true||result.id!==attemptId){
@@ -107,15 +73,15 @@
         }
         completed=true;
         let receiptSaved=false;try{sessionStorage.setItem('tdg-enquiry-receipt',JSON.stringify({id:result.id,time:Date.now()}));receiptSaved=true;}catch{}
-        const received="Thanks for getting in touch. We've received your enquiry. We'll review the details and get back to you to discuss the next step.";
+        const received="Thanks, I've got it. I read every enquiry myself and will come back to you within two working days.";
         if(receiptSaved){try{location.assign(config.thanks);}catch{status.textContent=received;}}
         else status.textContent=received;
       }catch{uncertain=attempted;showErrors({},uncertain?`We could not confirm delivery. Please email ${config.email} and mention that you tried the form. Reference: ${attemptId}. Avoid resending until the result is checked.`:`Your enquiry hasn't been sent. Please try again, or email us at ${config.email}.`);nonce=null;}
-      finally{busy=false;button.disabled=uncertain||completed;button.textContent=completed?'Enquiry sent':uncertain?'Check delivery before retrying':'Send enquiry';}
+      finally{busy=false;button.disabled=uncertain||completed;button.textContent=completed?'Enquiry sent':uncertain?'Check delivery before retrying':'Send to Nico';}
     });
     // The static form stays non-submittable if this controller cannot load.
-    button.disabled=!endpoint;
+    button.disabled=false;
   }
   const thanks=document.querySelector('#thanks-heading');
-  if(thanks){try{const receipt=JSON.parse(sessionStorage.getItem('tdg-enquiry-receipt')||'null');if(receipt?.id&&Date.now()-receipt.time<30*60*1000){thanks.textContent='Thanks for getting in touch.';document.querySelector('#thanks-status').textContent="We've received your enquiry. We'll review the details and get back to you to discuss the next step.";}}catch{}}
+  if(thanks){try{const receipt=JSON.parse(sessionStorage.getItem('tdg-enquiry-receipt')||'null');if(receipt?.id&&Date.now()-receipt.time<30*60*1000){thanks.textContent="Thanks, I've got it.";document.querySelector('#thanks-status').textContent="I read every enquiry myself and will come back to you within two working days.";}}catch{}}
 })();

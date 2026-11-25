@@ -1,0 +1,52 @@
+/* Keep the original value in flow and accessible while the visual frame counts. */
+.agency-site .figure-value {
+  position:relative;
+  display:inline-block;
+  font:inherit;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  margin:0;
+  max-width:none;
+}
+.agency-site .metric-face { display:inline; font:inherit; margin:0; max-width:none }
+.agency-site .figure-value.is-counting > .metric-face { opacity:0 }
+.agency-site .count-frame {
+  position:absolute;
+  top:0;
+  left:0;
+  display:block;
+  width:max-content;
+  max-width:none;
+  margin:0;
+  font:inherit;
+  transform-origin:left center;
+  pointer-events:none;
+  user-select:none;
+}
+
+.agency-site .stat-list {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  list-style:none;
+  margin:0;
+  padding:0;
+  max-width:58rem;
+}
+.agency-site .stat-list > .stat-row {
+  display:block;
+  margin:0;
+  padding:clamp(18px,2.4vw,30px) 0;
+  border-top:1px solid #d3cfca;
+  font-size:clamp(18px,1.8vw,25px);
+  line-height:1.5;
+}
+.agency-site .stat-row .figure-value {
+  font-family:'Bespoke Serif',Georgia,serif;
+  font-size:clamp(29px,3.4vw,48px);
+  line-height:1;
+  letter-spacing:-.035em;
+  vertical-align:baseline;
+}
+.agency-site .service-proof:has(.stat-list) { padding:0; border:0; margin:24px 0 }
+.agency-site .service-proof .stat-row { max-width:55ch }
+.agency-site .case-story > div:first-child { margin-top:0 }
