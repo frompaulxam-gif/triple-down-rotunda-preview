@@ -64,6 +64,7 @@
   let visible = true, ready = false;
   let frame = 0, previous = 0, startTime = 0, angle = -step/2;
   let radius = 0, sceneOffset = 0, drag = null;
+  let keyboardCard = null, suppressClick = false;
   const animations = [];
 
   if (root.dataset.orbitFilm === 'centre') {
@@ -153,7 +154,7 @@
       updateMarks(motion);
       scene.style.setProperty('--photo-blur',`blur(${(motion.normalisedSpeed*(innerWidth<701?1.6:3)).toFixed(2)}px)`);
       if (elapsed>=introDuration) endIntro();
-    } else if (!reduced.matches && !drag) angle -= idleSpeed*dt;
+    } else if (!reduced.matches && !drag && !keyboardCard) angle -= idleSpeed*dt;
     const r = radius*spread;
     cards.forEach((card,i) => {
       const rotation = i*step+angle, theta = rotation*Math.PI/180, cos = Math.cos(theta);
@@ -185,17 +186,31 @@
   }
   reduced.addEventListener('change',preferences);
   connection?.addEventListener('change',preferences);
+  scene.addEventListener('focusin',e => {
+    const card=e.target.closest('.orbit-print:focus-visible');
+    if (!card) return;
+    endIntro();
+    keyboardCard=card;
+    angle=-cards.indexOf(card)*step;
+    wake();
+  });
+  scene.addEventListener('focusout',() => {keyboardCard=null;wake();});
+  composition.addEventListener('click',e => {
+    if (suppressClick && e.detail>0) e.preventDefault();
+  },true);
   composition.addEventListener('pointerdown',e => {
-    if (!e.isPrimary || e.button!==0 || e.target.closest('a,button')) return;
+    if (!e.isPrimary || e.button!==0 || e.target.closest('.orbit-reel,button')) return;
+    suppressClick=false;
+    keyboardCard=null;
     drag={id:e.pointerId,x:e.clientX,y:e.clientY,angle,active:false};
   });
   composition.addEventListener('pointermove',e => {
     if (!drag || e.pointerId!==drag.id) return;
     const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
     if (!drag.active) {
-      if (Math.abs(dy)>7 && Math.abs(dy)>Math.abs(dx)) {drag=null;return;}
+      if (Math.abs(dy)>7 && Math.abs(dy)>Math.abs(dx)) {suppressClick=true;drag=null;return;}
       if (Math.abs(dx)<7) return;
-      drag.active=true; composition.classList.add('dragging'); composition.setPointerCapture(e.pointerId);
+      suppressClick=true; drag.active=true; composition.classList.add('dragging'); composition.setPointerCapture(e.pointerId);
     }
     angle=drag.angle+dx*.21; wake();
   });
