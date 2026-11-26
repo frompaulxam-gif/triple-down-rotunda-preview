@@ -1,0 +1,54 @@
+@font-face {
+  font-family:HomeFigureStamp;
+  src:url(brand-assets/Tanker-Regular.woff2) format('woff2');
+  font-display:swap;
+}
+#home-proof {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(6px,1.8vw,24px);
+  list-style:none;
+  margin:0;
+  padding:0 0 clamp(20px,4vw,48px);
+}
+#home-proof li {
+  min-width:0;
+  margin:0;
+  padding:clamp(10px,1.8vw,20px) 0 0;
+  border-top:1px solid #d4d1c9;
+}
+#home-proof svg {
+  display:block;
+  width:min(100%,116px);
+  aspect-ratio:100/52;
+  height:auto;
+  margin-bottom:clamp(9px,1.4vw,18px);
+  color:#22231f;
+}
+#home-proof .home-figure-number {
+  position:relative;
+  display:block;
+  font:400 clamp(17px,4.25vw,49px)/1.15 'Bespoke Serif',Georgia,serif;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  letter-spacing:-.035em;
+}
+#home-proof .home-figure-label {
+  display:block;
+  max-width:22ch;
+  margin-top:.3em;
+  font:400 clamp(11px,1.75vw,20px)/1.24 Archivo,Arial,sans-serif;
+  overflow-wrap:break-word;
+}
+#home-proof .home-figure-frame {position:absolute;inset:0;display:none}
+#home-proof.is-animating .home-figure-frame {display:block}
+#home-proof.is-animating .home-figure-number span:first-child {opacity:0}
+#home-proof.is-animating [data-step]:not(.arrived) {visibility:hidden}
+@media(prefers-reduced-motion:no-preference){
+ #home-proof .ticket-layer.arrived>g{animation:home-figure-deal-in .23s cubic-bezier(.16,.78,.22,1)}
+ #home-proof .stamp-layer.arrived>g{transform-box:fill-box;transform-origin:center;animation:home-figure-press-in .2s ease-out}
+ #home-proof .person.arrived>g{animation:home-figure-join-in .18s ease-out}
+}
+@keyframes home-figure-deal-in{from{transform:translate(4px,-8px);opacity:.2}to{transform:none;opacity:1}}
+@keyframes home-figure-press-in{0%{transform:scale(1.22);opacity:.2}65%{transform:scale(.95);opacity:1}100%{transform:none}}
+@keyframes home-figure-join-in{from{transform:translateY(3px);opacity:.15}to{transform:none;opacity:1}}
